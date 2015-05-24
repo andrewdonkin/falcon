@@ -17,4 +17,4 @@ sky_sphere {
   //rotate y*270 // glacier - puts the sun at our back
 }
 
-camera { location <44, 4, -5> look_at <0, 0, 0> }
+camera { location <20, 4, -60> look_at <0, 0, 0> }

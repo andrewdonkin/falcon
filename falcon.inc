@@ -43,6 +43,20 @@
   object {dockhalf rotate 180*x}
 }
 
+#declare mandible = 
+ // mandible reaches dia 45 dome at x=4, z=-22
+  hexdron(
+    <3.313,  1, -39.375>,
+    <    4,  1, -22>,
+    <   20,  1, -10.1>,
+    < 5.76,  1, -39.375>,
+    <3.313, -1, -39.375>,
+    <    4, -1, -22>,
+    <   20, -1, -10.1>,
+    < 5.76, -1, -39.375>,
+    0.1)
+
+
 
 #declare body = union {
 #if (1)
@@ -86,5 +100,9 @@
 #end
   object { docking }
   object {docking rotate 180*y}
+
+  object {mandible}
+  object {mandible rotate 180*z}
+
 }
 
