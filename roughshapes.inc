@@ -18,10 +18,23 @@
 #end
 
 //=====================================================
+#macro RandLimitedGapArray (RA, Scaler, MaxGapRatio)
+  RandArray(RA, Scaler)
+  #for (I, 0, dimension_size(RA, 1) - 2, 2)
+    #if ((RA[I+1] - RA[I]) > Scaler*MaxGapRatio)
+      #local RA[I+1] = RA[I] + rand(rseed) * Scaler*MaxGapRatio;
+    #end
+  #end // for
+#end
+
+//=====================================================
 #macro roughbox (corner2, Rsmall, NumChipsX, NumBulges)
 
 //  #local num_chips_y = abs(corner2.x) / num_chips_x * abs(corner2.y);
 //  #local num_chips_z = abs(corner2.x) / num_chips_x * abs(corner2.z);
+
+#local NumChipsX = ceil(NumChipsX);
+#local NumBulges = ceil(NumBulges);
 
 #local NumBulgesZ = ceil(abs(NumBulges / corner2.x * corner2.z));
 
@@ -29,18 +42,20 @@
 #local YY=corner2.y-Rsmall;
 #local ZZ=corner2.z-Rsmall;
 
+#warning concat("Corner2 ", str(corner2.x,0,3), " NumBulges ", str(NumBulges, 0, 0))
+
 #local BulgeArray = array[NumBulges*2];
 #local BulgeArrayZ = array[NumBulgesZ*2];
 
 difference {
   union {
-    box {<Rsmall, 0, Rsmall>, <corner2.x - Rsmall, corner2.y, corner2.z - Rsmall>} //tall
-    box {<0, 0, Rsmall>, <corner2.x, corner2.y - Rsmall, corner2.z - Rsmall>} // wide
-    box {<Rsmall, 0, 0>, <corner2.x - Rsmall, corner2.y - Rsmall, corner2.z>} // deep
-    cylinder {0, <0, corner2.y - Rsmall, 0>, Rsmall translate <Rsmall, 0, Rsmall>} // front left vertical
-    cylinder {0, <0, corner2.y - Rsmall, 0>, Rsmall translate <Rsmall, 0, corner2.z-Rsmall>} // back left vert
-    cylinder {0, <0, corner2.y - Rsmall, 0>, Rsmall translate <corner2.x-Rsmall, 0, Rsmall>} // front right vert
-    cylinder {0, <0, corner2.y - Rsmall, 0>, Rsmall translate <corner2.x-Rsmall, 0, corner2.z-Rsmall>} // back right vert
+    box {<Rsmall, 0, Rsmall>, <XX, corner2.y, ZZ>} //tall
+    box {<0, 0, Rsmall>, <corner2.x, YY, ZZ>} // wide
+    box {<Rsmall, 0, 0>, <XX, YY, corner2.z>} // deep
+    cylinder {0, <0, YY, 0>, Rsmall translate <Rsmall, 0, Rsmall>} // front left vertical
+    cylinder {0, <0, YY, 0>, Rsmall translate <Rsmall, 0, corner2.z-Rsmall>} // back left vert
+    cylinder {0, <0, YY, 0>, Rsmall translate <corner2.x-Rsmall, 0, Rsmall>} // front right vert
+    cylinder {0, <0, YY, 0>, Rsmall translate <corner2.x-Rsmall, 0, corner2.z-Rsmall>} // back right vert
     cylinder {0, (corner2.x-Rsmall*2) * x, Rsmall translate <Rsmall, corner2.y-Rsmall, Rsmall>} //top front horiz
     cylinder {0, (corner2.x-Rsmall*2) * x, Rsmall translate <Rsmall, corner2.y-Rsmall, corner2.z-Rsmall>} //top back horiz
     cylinder {0, (corner2.z-Rsmall*2) * z, Rsmall translate <Rsmall, corner2.y-Rsmall, Rsmall>} //top left horiz
@@ -87,7 +102,15 @@ difference {
       sphere {<XX, YY, BulgeStop>, Rsmall*1.1}
     #end
   } // end positive objects.  Now chip away at it
-  // TODO!
+  #for (I, 1, NumChipsX)
+    cylinder {-Rsmall * 3 * z, Rsmall * 3 * z, Rsmall
+      scale <2, 1, 1>
+      translate Rsmall * 0.3 * y // lessen the impact
+      rotate -(30+rand(rseed)*30)*x 
+      translate <rand(rseed) * corner2.x, corner2.y, 0>
+    }
+    
+  #end // for, chips
   
 }
 
@@ -131,7 +154,7 @@ difference {
         rotate (10 + rand(rseed) * 70) *x
     #else
       cylinder {<-R/2, 0, 0>, <R/2, 0, 0>, R/20
-      scale 2 *z // widen
+      scale <1, 1, 2> // widen
     #end
       translate (R*0.13) * y // get centre of object onto surface of the radius we will cut
       rotate (20 + rand(rseed) * 50) * -z // tilt
@@ -181,19 +204,22 @@ difference {
 // c2.y must be height of wall.
 // Leaving c2.z for the thickness.
 // MaxGapDepth is a fraction of the wall's height.
-#macro roughgappywall (c2, RSmall, NumGaps, MinGapDepth, MaxGapDepth)
+#macro roughgappywall (c2, RSmall, NumGaps, MinGapDepth, MaxGapDepth, ChipsPerUnit, BulgesPerUnit)
 
 #if (MinGapDepth < 0 | MinGapDepth > 1 | MaxGapDepth < 0 | MaxGapDepth > 1 | MinGapDepth > MaxGapDepth)
 #error "Bad gap depths"
 #end
 
 #local HChangeArray = array[NumGaps*2 + 1];
-RandArray(HChangeArray, c2.x+0.8)
+RandLimitedGapArray(HChangeArray, c2.x*0.8, 0.08)
 #local HChangeArray[NumGaps*2] = c2.x*0.9;
 
 union{
-object{roughbox(<HChangeArray[0] + c2.x*0.1 + RSmall, c2.y, c2.z>, RSmall, 10, 2)}
-#for (I, 0, NumGaps*2-1)
+  object{roughbox(<HChangeArray[0] + c2.x*0.1 + RSmall, c2.y, c2.z>,
+                RSmall,
+                ChipsPerUnit*(HChangeArray[0] + c2.x*0.1),
+                BulgesPerUnit*(HChangeArray[0] + c2.x*0.1))}
+  #for (I, 0, NumGaps*2-1)
   object {
     roughbox(<HChangeArray[I+1] - HChangeArray[I] + RSmall*2,
               #if (mod(I,2) = 0)
@@ -201,10 +227,13 @@ object{roughbox(<HChangeArray[0] + c2.x*0.1 + RSmall, c2.y, c2.z>, RSmall, 10, 2
               #else
                 c2.y,
               #end
-              c2.z>, RSmall, 1, 1)
+              c2.z>, RSmall,
+              ChipsPerUnit*(HChangeArray[I+1] - HChangeArray[I]),
+              BulgesPerUnit*(HChangeArray[I+1] - HChangeArray[I]))
     translate (HChangeArray[I]+c2.x*0.1 - RSmall) * x
   }
-#end // for
+  #end // for
+  // normal {brick 0.5 brick_size <0.1,0.1,1>}
 }
 #end // gappywall macro
 
