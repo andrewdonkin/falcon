@@ -84,7 +84,7 @@
   difference {
     // a rectangular section in the centre minus a hole for a headlight
     union {
-      roughbox (<0, -0.35, -0.3>, <2.4, 0.35, 0>) // between the two banks of cylinders
+      box {<0, -0.35, -0.3>, <2.4, 0.35, 0>} // between the two banks of cylinders
       roughbox (<0.1, -0.3, -0.4>, <2.3, 0.3, 0>) // smaller, poking further toward -Z
       #for (I, -0.2, 0.2, .03)   // vanes
         box{<0.15+rand(roughseed)/40, I-0.01, -0.45>, <2.25-rand(roughseed)/40, I+0.01, 0>}

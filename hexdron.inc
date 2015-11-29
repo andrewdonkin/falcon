@@ -1,5 +1,15 @@
+// A pollywantahedron is a hexdron (cuboid, non-rectangular sides)
+// with extra constraints and an easier interface.
+
+// A hexdron is a polyhedron with six quadrilateral sides, not necessarily
+// rectangles, which is the definition of "cuboid" according to some.
+// With the edges rounded off.  Parameters are the vertices of the corners.
+// That allows for non-flat sides, which are probably not desirable.
+// Picking the vertices is a p.i.t.a.
+// Can't remember why I called it a hexdron.
+
 #macro hexdron(
-  tlf, tlr, trr, trf, // top quadrilateral
+  tlf, tlr, trr, trf, // top quadrilateral.  Top left front, top left rear, etc.
   blf, blr, brr, brf, // bottom quadrilateral
   smallr	      // radius of rounded edges
   )
@@ -56,5 +66,32 @@
     #end
   }
     
+#end
+  
+#macro pollywantahedron (
+  maxx, maxy, maxz, // gross dimensions, bounding box
+  toein, camber, casterfront, casterback, topslope// angles away from a rectangular cuboid
+  smallr // radius of rounded edges
+  )
+
+  union {
+
+  intersection {
+    plane { -z, 0 rotate casterfront * x} // front
+    plane { z, 0 rotate -casterback * x translate maxz * z } // back
+    plane { x, 0 rotate camber * z rotate -toein * y translate maxx * x} // right
+    plane { -x, 0 rotate -camber * z rotate toein * y translate -maxx * x} // left
+    plane { -y, 0} // bottom
+    plane { y, 0 rotate topslope* x translate maxy*y} // top
+  }
+  
+  // debugging rods
+  cylinder { -maxx*x, maxx*x, smallr/2}
+  cylinder { <-maxx, maxy, 0> <maxx, maxy, 0>, smallr/2}
+  cylinder { <-maxx, maxy, maxz> <maxx, maxy, maxz> smallr/2}
+  cylinder { <-maxx, 0, maxz> <maxx, 0, maxz> smallr/2}
+  
+  }
+  
 #end
   
