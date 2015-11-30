@@ -5,8 +5,11 @@
 // rectangles, which is the definition of "cuboid" according to some.
 // With the edges rounded off.  Parameters are the vertices of the corners.
 // That allows for non-flat sides, which are probably not desirable.
+// Aside:  a saddle would handle non-flat sides better.  See
+// http://www.geocities.ws/evilsnack/matrix.html .
 // Picking the vertices is a p.i.t.a.
 // Can't remember why I called it a hexdron.
+
 
 #macro hexdron(
   tlf, tlr, trr, trf, // top quadrilateral.  Top left front, top left rear, etc.
@@ -74,6 +77,10 @@
   smallr // radius of rounded edges
   )
 
+  #local toeinr=radians(toein);
+  #local casterfrontr=radians(casterfront);
+  #local camberr=radians(camber);
+
   union {
 
   intersection {
@@ -82,15 +89,57 @@
     plane { x, 0 rotate camber * z rotate -toein * y translate maxx * x} // right
     plane { -x, 0 rotate -camber * z rotate toein * y translate -maxx * x} // left
     plane { -y, 0} // bottom
-    plane { y, 0 rotate topslope* x translate maxy*y} // top
-  }
+    plane { y, 0 rotate topslope* x translate <0, maxy, tan(casterfrontr)*maxy>} // top
+  hollow
+  texture {pigment {rgbf <1, 1, 1, 0.6>} }  
+  interior { ior 1}
+    }
   
+  union {
   // debugging rods
-  cylinder { -maxx*x, maxx*x, smallr/2}
-  cylinder { <-maxx, maxy, 0> <maxx, maxy, 0>, smallr/2}
-  cylinder { <-maxx, maxy, maxz> <maxx, maxy, maxz> smallr/2}
-  cylinder { <-maxx, 0, maxz> <maxx, 0, maxz> smallr/2}
+  //cylinder { -maxx*x, maxx*x, smallr/10}
+  cylinder { <-maxx, maxy, 0> <maxx, maxy, 0>, smallr/20}
+  //cylinder { <-maxx, maxy, maxz> <maxx, maxy, maxz> smallr/4}
+  //cylinder { <-maxx, 0, maxz> <maxx, 0, maxz> smallr/4}
   
+  #local blf = <-maxx, 0, 0>;
+  #local brf = <maxx, 0, 0>;
+  #local blr = <(tan(toeinr) * maxz)-maxx, 0, maxz>;
+  #local brr = <maxx- (tan(toeinr) * maxz), 0, maxz>;
+  
+  #local tlf = <0, 0, tan(casterfrontr)*maxy>; // offset forward (+z) from front side tilt
+  #local tlf = <tan(camberr)*maxy // offset right from left side tilt
+                  + tan(toeinr)*tlf.z // offset right from left side toe-in
+                  - maxx,
+                maxy,
+                tlf.z>;
+  #local trf = <0, 0, tan(casterfrontr)*maxy>;  // Get to X&Y later.  Offset forward (+z) from front side tilt
+  #local trf = <maxx
+                  - tan(camberr)*maxy // offset left from right side tilt
+                  - tan(toeinr)*trf.z, // offset left from right side toe-in
+                maxy, trf.z>;
+
+  cylinder { tlf, trf, smallr/20}
+
+
+  #local tlr = <0, maxy-0, maxz-tan(casterfrontr)*maxy>;  // Get to X&Y later.  Offset forward (+z) from front side tilt
+  #local trf = <maxx
+                  - tan(camberr)*maxy // offset left from right side tilt
+                  - tan(toeinr)*trf.z, // offset left from right side toe-in
+                maxy, trf.z>;
+  
+  sphere {blf, smallr/4}
+  sphere {brf, smallr/4}
+  sphere {blr, smallr/4}
+  sphere {brr, smallr/4}
+
+  sphere {tlf, smallr/4}
+  sphere {trf, smallr/4}
+
+
+    pigment {rgb x}
+  }
+
   }
   
 #end
