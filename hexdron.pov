@@ -12,7 +12,7 @@
 //        -y, z-y, 2*x+z-y, 2*x-y,        0.2)
 
 
-object {  pollywantahedron(1.5, 1, 2, 30, 10, 20, 45, 15, 0.1)  translate -y }
+object {  pollywantahedron(1.5, 1, 1, 30, 10, 5, 15, 5, 0.1)  translate -y/2 }
 
 
 

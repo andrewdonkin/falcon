@@ -10,6 +10,7 @@
 // Picking the vertices is a p.i.t.a.
 // Can't remember why I called it a hexdron.
 
+#include "math.inc" // VAngleD
 
 #macro hexdron(
   tlf, tlr, trr, trf, // top quadrilateral.  Top left front, top left rear, etc.
@@ -109,14 +110,43 @@
   
   #local tlf = <tan(camberr)*maxy, maxy, tan(casterfrontr)*maxy>; // this is before toe-in, if blf was origin
   #local tlf2 = vrotate(tlf, toein * y);  // rotated it clockwise (looking down) by toe-in
-  #local tfdelta = tlf - tlf2; // use it twice later
   #local tlf = <tlf2.x + (tlf.z - tlf2.z) * tan(toeinr) - maxx, maxy, tlf.z>;
-
   #local trf = tlf * <-1, 1, 1>;
+
+  // top rear is harder.
+  // vector from top front to bottom rear
+  // #local tf2br = brr - trf;
+  // angle between that and top front -> top rear
+  #local baseangle = degrees(atan2(maxy, (maxz-trf.z)));
+  // baseangle = VAngleD(tf2br, z);
+  // #local frontangle = VAngleD(tf2br, 90-topslope);
+  cylinder { trf, brr, smallr/20}
+
+  #local frontangle = 90-topslope-baseangle;
+  #if (frontangle <= 0)
+    #error concat("pollywantahedron front angle ", str(frontangle, 1, 1))
+  #end
+
+  #local backangle = 90-casterback-baseangle;
+  #if (backangle <= 0)
+    #error concat("pollywantahedron back angle ", str(backangle, 1, 1))
+  #end
+  // triangle with vertices trf and brr, angles frontangle and backangle resp,
+  // should be able to find the third vertex.
+  #local Tans = tan(radians(backangle))/tan(radians(frontangle));
+  #local D1 = vlength(brr-trf) * Tans / (1 + Tans);
+
+  #warning concat("baseangle ", str(baseangle, 1, 0),
+                  " frontangle ", str(frontangle, 1, 0),
+                  " backangle ", str(backangle, 1, 0),
+                  " d ", str(vlength(brr-trf), 1, 3),
+                  " d1 ", str(D1, 1, 3)
+                  )
+
 
   cylinder { tlf, trf, smallr/20}
 
-  #local tlr = <0, maxy-0, maxz-tan(casterfrontr)*maxy>;  // Get to X&Y later.  Offset forward (+z) from front side tilt
+  #local trr = trf + D1 * vnormalize(brr-trf);
   
   sphere {blf, smallr/4}
   sphere {brf, smallr/4}
@@ -125,6 +155,8 @@
 
   sphere {tlf, smallr/4}
   sphere {trf, smallr/4}
+
+  sphere {trr, smallr/4}
 
 
     pigment {rgb x}
