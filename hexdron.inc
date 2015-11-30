@@ -105,28 +105,18 @@
   #local blf = <-maxx, 0, 0>;
   #local brf = <maxx, 0, 0>;
   #local blr = <(tan(toeinr) * maxz)-maxx, 0, maxz>;
-  #local brr = <maxx- (tan(toeinr) * maxz), 0, maxz>;
+  #local brr = blr * <-1, 1, 1>;
   
-  #local tlf = <0, 0, tan(casterfrontr)*maxy>; // offset forward (+z) from front side tilt
-  #local tlf = <tan(camberr)*maxy // offset right from left side tilt
-                  + tan(toeinr)*tlf.z // offset right from left side toe-in
-                  - maxx,
-                maxy,
-                tlf.z>;
-  #local trf = <0, 0, tan(casterfrontr)*maxy>;  // Get to X&Y later.  Offset forward (+z) from front side tilt
-  #local trf = <maxx
-                  - tan(camberr)*maxy // offset left from right side tilt
-                  - tan(toeinr)*trf.z, // offset left from right side toe-in
-                maxy, trf.z>;
+  #local tlf = <tan(camberr)*maxy, maxy, tan(casterfrontr)*maxy>; // this is before toe-in, if blf was origin
+  #local tlf2 = vrotate(tlf, toein * y);  // rotated it clockwise (looking down) by toe-in
+  #local tfdelta = tlf - tlf2; // use it twice later
+  #local tlf = <tlf2.x + (tlf.z - tlf2.z) * tan(toeinr) - maxx, maxy, tlf.z>;
+
+  #local trf = tlf * <-1, 1, 1>;
 
   cylinder { tlf, trf, smallr/20}
 
-
   #local tlr = <0, maxy-0, maxz-tan(casterfrontr)*maxy>;  // Get to X&Y later.  Offset forward (+z) from front side tilt
-  #local trf = <maxx
-                  - tan(camberr)*maxy // offset left from right side tilt
-                  - tan(toeinr)*trf.z, // offset left from right side toe-in
-                maxy, trf.z>;
   
   sphere {blf, smallr/4}
   sphere {brf, smallr/4}
