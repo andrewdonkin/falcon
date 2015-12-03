@@ -12,7 +12,11 @@
 //        -y, z-y, 2*x+z-y, 2*x-y,        0.2)
 
 
-object {  pollywantahedron(1.5, 1, 1, 30, 10, 5, 15, 5, 0.1)  translate -y/2 }
+//object {  pollywantahedron(1.5, 1, 1, 30, 10, 5, 15, 5, 0.1)  translate -y/2 }
+camera { location <1.1, 0.5, 0.7> look_at <0.5, 0.3, 0.8> }
+
+object {  pollywantahedron(1.5, 1, 1, 0, 10, 0, 0, 0, 0.1)  translate -y/2 }
+camera { location <1.8, 0.55, 1> look_at <1.4, 0.5, 1> angle 30}
 
 
 
@@ -32,4 +36,3 @@ sky_sphere {
   //rotate y*270 // glacier - puts the sun at our back
 }
 
-camera { location <3, 0.5, -0.5> look_at <0, 0, 0> }

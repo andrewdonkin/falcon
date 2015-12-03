@@ -99,7 +99,7 @@
   union {
   // debugging rods
   //cylinder { -maxx*x, maxx*x, smallr/10}
-  cylinder { <-maxx, maxy, 0> <maxx, maxy, 0>, smallr/20}
+  // cylinder { <-maxx, maxy, 0> <maxx, maxy, 0>, smallr/20}
   //cylinder { <-maxx, maxy, maxz> <maxx, maxy, maxz> smallr/4}
   //cylinder { <-maxx, 0, maxz> <maxx, 0, maxz> smallr/4}
   
@@ -116,8 +116,8 @@
   // top rear is harder.
   // vector from top front to bottom rear
   // #local tf2br = brr - trf;
-  // angle between that and top front -> top rear
-  #local baseangle = degrees(atan2(maxy, (maxz-trf.z)));
+  // angle between that and Z axis, if projected on X=0
+  #local baseangle = degrees(atan2(maxy, (maxz-trf.z))); // trf.z=tan(casterfrontr)*maxy
   // baseangle = VAngleD(tf2br, z);
   // #local frontangle = VAngleD(tf2br, 90-topslope);
   cylinder { trf, brr, smallr/20}
@@ -136,17 +136,37 @@
   #local Tans = tan(radians(backangle))/tan(radians(frontangle));
   #local D1 = vlength(brr-trf) * Tans / (1 + Tans);
 
+  cylinder { tlf, trf, smallr/20}
+
+  // Green is a point on trf->brr at which a perpendicular bisector
+  // would pass through trr.
+  #local Green = trf + D1 * vnormalize(brr-trf);
+  sphere {Green, smallr/4 pigment {rgb <0, 1, 0>}} // green ball
+  #local H = D1 * tan(radians(frontangle)); // correct if projected onto X=0.  Too short otherwise.
+  
+  // angle the side's normal is away from X axis.  Important to rotate around Z first.
+  #local sidenormal = vrotate(vrotate(x, <0, 0, camber>), <0, -toein, 0>);
+  
+  #local greentotrr = vcross(brr-trf, sidenormal);
+  
+  #local sidefromxr = VAngle(x, sidenormal);
+  
+//  cylinder {trr, trr + H * sidenormal, smallr/20}
+  #local H = H * (1 + (1-cos(sidefromxr)) / cos(sidefromxr));
+  #local trr = Green + H * vnormalize(greentotrr);
+  cylinder {Green, trr, smallr/100}
+
   #warning concat("baseangle ", str(baseangle, 1, 0),
                   " frontangle ", str(frontangle, 1, 0),
                   " backangle ", str(backangle, 1, 0),
                   " d ", str(vlength(brr-trf), 1, 3),
-                  " d1 ", str(D1, 1, 3)
+                  " d1 ", str(D1, 1, 3),
+                  " H ", str(H, 1, 3),
+                  " sideangle ", str(degrees(sidefromxr), 1, 3)
                   )
 
-
-  cylinder { tlf, trf, smallr/20}
-
-  #local trr = trf + D1 * vnormalize(brr-trf);
+  #local tlr = trr * <-1, 1, 1>;
+  
   
   sphere {blf, smallr/4}
   sphere {brf, smallr/4}
@@ -156,7 +176,10 @@
   sphere {tlf, smallr/4}
   sphere {trf, smallr/4}
 
-  sphere {trr, smallr/4}
+//  sphere {trr, smallr/30}
+  sphere {tlr, smallr/30}
+
+//  sphere {trr, smallr/4}
 
 
     pigment {rgb x}
