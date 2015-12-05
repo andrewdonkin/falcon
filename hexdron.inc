@@ -72,6 +72,7 @@
     
 #end
   
+//========================================
 #macro pollywantahedron (
   maxx, maxy, maxz, // gross dimensions, bounding box
   toein, camber, casterfront, casterback, topslope// angles away from a rectangular cuboid
@@ -109,63 +110,59 @@
   #local brr = blr * <-1, 1, 1>;
   
   #local tlf = <tan(camberr)*maxy, maxy, tan(casterfrontr)*maxy>; // this is before toe-in, if blf was origin
-  #local tlf2 = vrotate(tlf, toein * y);  // rotated it clockwise (looking down) by toe-in
+  #local tlf2 = vrotate(tlf, toein * y);  // rotated it clockwise (looking down) by toe-in.  tlf2.z <= tlf.z
+  // Interested in how far its Z coord moved
   #local tlf = <tlf2.x + (tlf.z - tlf2.z) * tan(toeinr) - maxx, maxy, tlf.z>;
   #local trf = tlf * <-1, 1, 1>;
 
-  // top rear is harder.
-  // vector from top front to bottom rear
-  // #local tf2br = brr - trf;
-  // angle between that and Z axis, if projected on X=0
-  #local baseangle = degrees(atan2(maxy, (maxz-trf.z))); // trf.z=tan(casterfrontr)*maxy
-  // baseangle = VAngleD(tf2br, z);
-  // #local frontangle = VAngleD(tf2br, 90-topslope);
-  cylinder { trf, brr, smallr/20}
-
-  #local frontangle = 90-topslope-baseangle;
-  #if (frontangle <= 0)
-    #error concat("pollywantahedron front angle ", str(frontangle, 1, 1))
-  #end
-
-  #local backangle = 90-casterback-baseangle;
-  #if (backangle <= 0)
-    #error concat("pollywantahedron back angle ", str(backangle, 1, 1))
-  #end
-  // triangle with vertices trf and brr, angles frontangle and backangle resp,
-  // should be able to find the third vertex.
-  #local Tans = tan(radians(backangle))/tan(radians(frontangle));
-  #local D1 = vlength(brr-trf) * Tans / (1 + Tans);
-
   cylinder { tlf, trf, smallr/20}
 
-  // Green is a point on trf->brr at which a perpendicular bisector
-  // would pass through trr.
-  #local Green = trf + D1 * vnormalize(brr-trf);
-  sphere {Green, smallr/4 pigment {rgb <0, 1, 0>}} // green ball
-  #local H = D1 * tan(radians(frontangle)); // correct if projected onto X=0.  Too short otherwise.
-  
-  // angle the side's normal is away from X axis.  Important to rotate around Z first.
+  // top rear is harder.
+
   #local sidenormal = vrotate(vrotate(x, <0, 0, camber>), <0, -toein, 0>);
-  
-  #local greentotrr = vcross(brr-trf, sidenormal);
-  
-  #local sidefromxr = VAngle(x, sidenormal);
-  
-//  cylinder {trr, trr + H * sidenormal, smallr/20}
-  #local H = H * (1 + (1-cos(sidefromxr)) / cos(sidefromxr));
-  #local trr = Green + H * vnormalize(greentotrr);
-  cylinder {Green, trr, smallr/100}
 
-  #warning concat("baseangle ", str(baseangle, 1, 0),
-                  " frontangle ", str(frontangle, 1, 0),
-                  " backangle ", str(backangle, 1, 0),
-                  " d ", str(vlength(brr-trf), 1, 3),
-                  " d1 ", str(D1, 1, 3),
-                  " H ", str(H, 1, 3),
-                  " sideangle ", str(degrees(sidefromxr), 1, 3)
-                  )
 
-  #local tlr = trr * <-1, 1, 1>;
+  #local Green = <trf.x - (maxz - trf.z) * tan(toeinr), maxy, maxz>;
+  cylinder {Green, brr, smallr/400 pigment {rgb <0, 1, 0>}}
+  // Green == trr if casterback == topslope == 0
+  // Push the top rear downward
+  #local Yellow  = vrotate(Green - trf, x * topslope);
+  // lengthen it onto Z=maxz and make absolute
+  #local Yellow  = Yellow * ((Green.z -trf.z) / Yellow.z) + trf;
+  // Now z and y are correct, but it is left of where it should be (and still no casterback)
+  cylinder {Yellow, trf, smallr/200 pigment {rgb <1, 1, 0>}}
+  // make it relative to Green, account for camber by projecting onto Green->brr
+  #local Cyan = VProject_Axis(Yellow-Green, brr - Green);
+  // high.  Push it down, then make absolute
+  #local Cyan  = Cyan * (Green.y-Yellow.y) / -Cyan.y + Green;
+  cylinder {Cyan, trf, smallr/200 pigment {rgb <0, 1, 1>}}
+//  #local Yellow  = trf+Yellow;
+  // Yellow == trr if casterback == 0.
+  // Now add casterback:  pull the top rear forward
+  #local Purple  = brr + vrotate(Yellow - brr, -x * casterback);
+  // Has gone low. Project it back up onto trf->Yellow
+  #local trr = Yellow + VProject_Axis(Purple - Yellow, trf - Yellow);
+
+  sphere {Green, smallr/30 pigment {rgb <0, 1, 0>}}
+
+  cylinder {Yellow, trf, smallr/400}
+
+  union {sphere {Yellow, smallr/30 } cylinder {Yellow, Yellow+y*0.05, smallr/200} pigment {rgb <1, 1, 0>}}
+  union {sphere {Cyan, smallr/30 } cylinder {Cyan, Cyan+y*0.05, smallr/200} cylinder {Cyan, Cyan-z*0.05, smallr/200} pigment {rgb <0, 1, 1>}}
+  union {sphere {Purple, smallr/30 } cylinder {Purple, Purple-x*0.05, smallr/200} cylinder {Purple, Purple+y*0.05, smallr/200} pigment { rgb <1, 0, 1>}}
+  union {sphere {trr, smallr/30} cylinder {trr, trr-z*0.05, smallr/200} cylinder {trr, trr-x*0.05, smallr/200} cylinder {trr, trr-y*0.05, smallr/200} pigment {rgb <1, 0, 0>}}
+  
+  // Green.z has come forward:  it is <= maxz.  Push it back.
+  //#local Green = sqrt(maxz*maxz + maxy*maxy) * vnormalize(Green);
+  //sphere {Green + maxx * x, smallr/30 pigment {rgb <0, 1, 1>}}
+
+
+
+//  #warning concat("baseangle ", str(baseangle, 1, 0),
+//                  " frontangle ", str(frontangle, 1, 0),
+//                  )
+
+//  #local tlr = trr * <-1, 1, 1>;
   
   
   sphere {blf, smallr/4}
@@ -177,7 +174,7 @@
   sphere {trf, smallr/4}
 
 //  sphere {trr, smallr/30}
-  sphere {tlr, smallr/30}
+//  sphere {tlr, smallr/30}
 
 //  sphere {trr, smallr/4}
 

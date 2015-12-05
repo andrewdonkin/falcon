@@ -13,11 +13,15 @@
 
 
 //object {  pollywantahedron(1.5, 1, 1, 30, 10, 5, 15, 5, 0.1)  translate -y/2 }
-camera { location <1.1, 0.5, 0.7> look_at <0.5, 0.3, 0.8> }
+//camera { location <1.1, 0.5, 0.7> look_at <0.5, 0.3, 0.8> }
 
-object {  pollywantahedron(1.5, 1, 1, 0, 10, 0, 0, 0, 0.1)  translate -y/2 }
-camera { location <1.8, 0.55, 1> look_at <1.4, 0.5, 1> angle 30}
+//object {  pollywantahedron(1.5, 1, 1, /* toein */ 4, /* camber */ 6, 20, 8, 10, 0.1)  translate -y/2 }
+//camera { location <1.6, 0.5, 0.6> look_at <1.30, 0.44, 0.88> angle 30}
 
+
+object {  pollywantahedron(1.5, 1, 1, /* toein */ 0, /* camber */ 14, 0, 0, 5, 0.1)  translate -y/2 }
+camera { location <1.6, 0.5, 0.6> look_at <1.3, 0.45, 0.9> angle 30}
+//camera { location <1.5, 0.6, -0.6> look_at <1.3, 0.5, 1> angle 30}
 
 
 global_settings {
