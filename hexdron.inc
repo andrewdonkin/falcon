@@ -119,50 +119,63 @@
 
   // top rear is harder.
 
-  #local sidenormal = vrotate(vrotate(x, <0, 0, camber>), <0, -toein, 0>);
+//  #local sidenormal = vrotate(vrotate(x, <0, 0, camber>), <0, -toein, 0>);
 
 
   #local Green = <trf.x - (maxz - trf.z) * tan(toeinr), maxy, maxz>;
   cylinder {Green, brr, smallr/400 pigment {rgb <0, 1, 0>}}
   // Green == trr if casterback == topslope == 0
   // Push the top rear downward
-  #local Yellow  = vrotate(Green - trf, x * topslope);
-  // lengthen it onto Z=maxz and make absolute
-  #local Yellow  = Yellow * ((Green.z -trf.z) / Yellow.z) + trf;
-  // Now z and y are correct, but it is left of where it should be (and still no casterback)
-  cylinder {Yellow, trf, smallr/200 pigment {rgb <1, 1, 0>}}
-  // make it relative to Green, account for camber by projecting onto Green->brr
-  #local Cyan = VProject_Axis(Yellow-Green, brr - Green);
-  // high.  Push it down, then make absolute
-  #local Cyan  = Cyan * (Green.y-Yellow.y) / -Cyan.y + Green;
-  cylinder {Cyan, trf, smallr/200 pigment {rgb <0, 1, 1>}}
-//  #local Yellow  = trf+Yellow;
-  // Yellow == trr if casterback == 0.
-  // Now add casterback:  pull the top rear forward
-  #local Purple  = brr + vrotate(Yellow - brr, -x * casterback);
-  // Has gone low. Project it back up onto trf->Yellow
-  #local trr = Yellow + VProject_Axis(Purple - Yellow, trf - Yellow);
+  #if (topslope > 0)
+    #local Yellow  = vrotate(Green - trf, x * topslope);
+    // lengthen it onto Z=maxz and make absolute
+    #local Yellow  = Yellow * ((Green.z -trf.z) / Yellow.z) + trf;
+    // Now z and y are correct, but it is left of where it should be (and still no casterback)
+    // make it relative to Green, account for camber by projecting onto Green->brr
+    #local Cyann = VProject_Axis(Yellow-Green, brr - Green);
+    // high.  Push it down, then make absolute
+    #local Cyann  = Cyann * (Green.y-Yellow.y) / -Cyann.y + Green;
+    cylinder {Cyann, trf, smallr/200 pigment {rgb <0, 1, 1>}}
+  #else
+    #local Yellow = Green;
+    #local Cyann = Green;
+  #end
+    
+  // Cyann == trr if casterback == 0.
+  // The vector trr->Cyan runs perfectly along the TR edge,
+  // but if casterback > 0 the vector is too long
+  // (Cyann is too +z, and too +x if there is toe in, and too +y if there is topslope)
+ 
+  #if (casterback > 0)
+    // Now add casterback:  pull the top rear forward
+
+    #local backnormal = vrotate(z, <-casterback, 0, 0>);
+
+ //   #local Purple  = brr + vrotate(Cyann - brr, -x * casterback);
+    #local Purple  = VProject_Plane(Cyann - brr, backnormal) + brr;
+    // Has gone low. Project it back up onto trf->Yellow
+//   #local trr = VProject_Axis(Purple - Cyann, trf - Cyann) + Cyann;
+    #local trr = <Purple.x, trf.y - (trf.y-Cyann.y) * (Purple.z-trf.z) / (Cyann.z-trf.z), Purple.z>;
+  #else
+    #local Purple  = Cyann;
+    #local trr = Cyann;
+  #end
+
 
   sphere {Green, smallr/30 pigment {rgb <0, 1, 0>}}
 
-  cylinder {Yellow, trf, smallr/400}
-
-  union {sphere {Yellow, smallr/30 } cylinder {Yellow, Yellow+y*0.05, smallr/200} pigment {rgb <1, 1, 0>}}
-  union {sphere {Cyan, smallr/30 } cylinder {Cyan, Cyan+y*0.05, smallr/200} cylinder {Cyan, Cyan-z*0.05, smallr/200} pigment {rgb <0, 1, 1>}}
-  union {sphere {Purple, smallr/30 } cylinder {Purple, Purple-x*0.05, smallr/200} cylinder {Purple, Purple+y*0.05, smallr/200} pigment { rgb <1, 0, 1>}}
-  union {sphere {trr, smallr/30} cylinder {trr, trr-z*0.05, smallr/200} cylinder {trr, trr-x*0.05, smallr/200} cylinder {trr, trr-y*0.05, smallr/200} pigment {rgb <1, 0, 0>}}
+  union {sphere {Yellow, smallr/30 } cylinder {Yellow, Yellow+y*0.1, smallr/200} pigment {rgb <1, 1, 0>}}
+  cylinder {Yellow, trf, smallr/200 pigment {rgb <1, 1, 0>}}
+  union {sphere {0, smallr/30 } cylinder {0, y*0.05, smallr/200} cylinder {0, -z*0.05, smallr/200} translate Cyann pigment {rgb <0, 1, 1>}}
+  union {sphere {0, smallr/30 } cylinder {0, -x*0.05, smallr/200} cylinder {0, y*0.07, smallr/200} 
+         translate Purple pigment { rgb <1, 0, 1>}}
+  cylinder {brr, brr + (Purple-brr)*1.1, smallr/200}
+  union {sphere {0, smallr/30} cylinder {0, -z*0.05, smallr/200}
+         cylinder {0, -x*0.05, smallr/200}
+         cylinder {0, -y*0.05, smallr/200}
+         translate trr pigment {rgb <1, 0, 0>}}
   
-  // Green.z has come forward:  it is <= maxz.  Push it back.
-  //#local Green = sqrt(maxz*maxz + maxy*maxy) * vnormalize(Green);
-  //sphere {Green + maxx * x, smallr/30 pigment {rgb <0, 1, 1>}}
-
-
-
-//  #warning concat("baseangle ", str(baseangle, 1, 0),
-//                  " frontangle ", str(frontangle, 1, 0),
-//                  )
-
-//  #local tlr = trr * <-1, 1, 1>;
+  #local tlr = trr * <-1, 1, 1>;
   
   
   sphere {blf, smallr/4}
