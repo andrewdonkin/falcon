@@ -79,10 +79,51 @@
   smallr // radius of rounded edges
   )
 
+  object {
   #local toeinr=radians(toein);
   #local casterfrontr=radians(casterfront);
   #local camberr=radians(camber);
 
+
+  #local blf = <-maxx, 0, 0>; // bottom left front
+  #local brf = <maxx, 0, 0>;  // bottom right front
+  #local blr = <(tan(toeinr) * maxz)-maxx, 0, maxz>; // bottom left rear.  Moved right by toe in.
+  #local brr = blr * <-1, 1, 1>; // bottom right rear
+  
+  // Top left front.  Moved right by camber, and +Z by front caster, then right and -Z by toe in
+  #local tlf = <tan(camberr)*maxy, maxy, tan(casterfrontr)*maxy>; // this is before toe-in, and relative to blf
+  #local tlf2 = vrotate(tlf, toein * y);  // rotated it clockwise (looking down) by toe-in.  tlf2.z <= tlf.z
+  // Interested in how far its Z coord moved
+  #local tlf = <tlf2.x + (tlf.z - tlf2.z) * tan(toeinr) - maxx, maxy, tlf.z>;
+  #local trf = tlf * <-1, 1, 1>;
+
+  // top rear is harder.
+
+  // imagine orthogonal view from right (looking toward -X)
+  // vector from top left to bottom right is the base of a triangle with trr at its apex.
+  #local basevector = <0, -maxy, maxz-trf.z>;
+  #local baseslope = degrees(atan2(maxy, maxz-trf.z));
+  #local tlangle = baseslope - topslope; // top left, when viewed from high X
+  #local brangle = (90-baseslope) - casterback; // bottom right when viewed from high X
+  #local tans = tan(radians(brangle))/tan(radians(tlangle));
+  #local D1 = vlength(basevector) * tans / (1 + tans); // trust me
+  #local Hite = D1 * tan(radians(tlangle));
+  // if we moved D1 (length) down basevector then turned 90 deg left
+  // then moved Hite forward we'd be at brr, in the orthogonal view.
+  // basevector has constant X.  Find a vector at right angles to it.
+  #local supertop = vcross(basevector, x);  // will also have constant X
+  #local Green = <maxx, maxy, trf.z> + D1 * vnormalize(basevector) + Hite * vnormalize(supertop);
+  // now Green.y and Green.z are the same as trr's.  Need X.
+  #local trr = <trf.x
+                - (Green.z-trf.z) * tan(radians(toein)) // move left for toe in
+                + (maxy-Green.y) * tan(radians(camber)), // move right for camber
+                Green.y, Green.z>;
+
+//  #local sidenormal = vrotate(vrotate(x, <0, 0, camber>), <0, -toein, 0>);
+
+  #local tlr = trr * <-1, 1, 1>;
+
+  #if (0)
   union {
 
   intersection {
@@ -92,11 +133,19 @@
     plane { -x, 0 rotate -camber * z rotate toein * y translate -maxx * x} // left
     plane { -y, 0} // bottom
     plane { y, 0 rotate topslope* x translate <0, maxy, tan(casterfrontr)*maxy>} // top
-  hollow
-  texture {pigment {rgbf <1, 1, 1, 0.6>} }  
-  interior { ior 1}
+    //hollow texture {pigment {rgbf <1, 1, 1, 0.6>} } interior { ior 1}
     }
+  }
+  #else
+    hexdron(
+      tlf, tlr, trr, trf,
+      blf, blr, brr, brf,
+      smallr
+    )
+  #end
   
+  
+  #if (0)
   union {
   // debugging rods
   //cylinder { -maxx*x, maxx*x, smallr/10}
@@ -104,79 +153,20 @@
   //cylinder { <-maxx, maxy, maxz> <maxx, maxy, maxz> smallr/4}
   //cylinder { <-maxx, 0, maxz> <maxx, 0, maxz> smallr/4}
   
-  #local blf = <-maxx, 0, 0>;
-  #local brf = <maxx, 0, 0>;
-  #local blr = <(tan(toeinr) * maxz)-maxx, 0, maxz>;
-  #local brr = blr * <-1, 1, 1>;
-  
-  #local tlf = <tan(camberr)*maxy, maxy, tan(casterfrontr)*maxy>; // this is before toe-in, if blf was origin
-  #local tlf2 = vrotate(tlf, toein * y);  // rotated it clockwise (looking down) by toe-in.  tlf2.z <= tlf.z
-  // Interested in how far its Z coord moved
-  #local tlf = <tlf2.x + (tlf.z - tlf2.z) * tan(toeinr) - maxx, maxy, tlf.z>;
-  #local trf = tlf * <-1, 1, 1>;
 
   cylinder { tlf, trf, smallr/20}
 
-  // top rear is harder.
-
-//  #local sidenormal = vrotate(vrotate(x, <0, 0, camber>), <0, -toein, 0>);
-
-
-  #local Green = <trf.x - (maxz - trf.z) * tan(toeinr), maxy, maxz>;
-  cylinder {Green, brr, smallr/400 pigment {rgb <0, 1, 0>}}
-  // Green == trr if casterback == topslope == 0
-  // Push the top rear downward
-  #if (topslope > 0)
-    #local Yellow  = vrotate(Green - trf, x * topslope);
-    // lengthen it onto Z=maxz and make absolute
-    #local Yellow  = Yellow * ((Green.z -trf.z) / Yellow.z) + trf;
-    // Now z and y are correct, but it is left of where it should be (and still no casterback)
-    // make it relative to Green, account for camber by projecting onto Green->brr
-    #local Cyann = VProject_Axis(Yellow-Green, brr - Green);
-    // high.  Push it down, then make absolute
-    #local Cyann  = Cyann * (Green.y-Yellow.y) / -Cyann.y + Green;
-    cylinder {Cyann, trf, smallr/200 pigment {rgb <0, 1, 1>}}
-  #else
-    #local Yellow = Green;
-    #local Cyann = Green;
-  #end
-    
-  // Cyann == trr if casterback == 0.
-  // The vector trr->Cyan runs perfectly along the TR edge,
-  // but if casterback > 0 the vector is too long
-  // (Cyann is too +z, and too +x if there is toe in, and too +y if there is topslope)
- 
-  #if (casterback > 0)
-    // Now add casterback:  pull the top rear forward
-
-    #local backnormal = vrotate(z, <-casterback, 0, 0>);
-
- //   #local Purple  = brr + vrotate(Cyann - brr, -x * casterback);
-    #local Purple  = VProject_Plane(Cyann - brr, backnormal) + brr;
-    // Has gone low. Project it back up onto trf->Yellow
-//   #local trr = VProject_Axis(Purple - Cyann, trf - Cyann) + Cyann;
-    #local trr = <Purple.x, trf.y - (trf.y-Cyann.y) * (Purple.z-trf.z) / (Cyann.z-trf.z), Purple.z>;
-  #else
-    #local Purple  = Cyann;
-    #local trr = Cyann;
-  #end
-
-
-  sphere {Green, smallr/30 pigment {rgb <0, 1, 0>}}
-
-  union {sphere {Yellow, smallr/30 } cylinder {Yellow, Yellow+y*0.1, smallr/200} pigment {rgb <1, 1, 0>}}
-  cylinder {Yellow, trf, smallr/200 pigment {rgb <1, 1, 0>}}
-  union {sphere {0, smallr/30 } cylinder {0, y*0.05, smallr/200} cylinder {0, -z*0.05, smallr/200} translate Cyann pigment {rgb <0, 1, 1>}}
-  union {sphere {0, smallr/30 } cylinder {0, -x*0.05, smallr/200} cylinder {0, y*0.07, smallr/200} 
-         translate Purple pigment { rgb <1, 0, 1>}}
-  cylinder {brr, brr + (Purple-brr)*1.1, smallr/200}
-  union {sphere {0, smallr/30} cylinder {0, -z*0.05, smallr/200}
-         cylinder {0, -x*0.05, smallr/200}
-         cylinder {0, -y*0.05, smallr/200}
-         translate trr pigment {rgb <1, 0, 0>}}
+  #warning concat("baseslope ", str(baseslope, 1, 0),
+                  " tlangle ", str(tlangle, 1, 0),
+                  " brangle ", str(brangle, 1, 0),
+                  " D1 ", str(D1, 1, 3),
+                  " supertop.y ", str(supertop.y, 1, 3),
+                  " Green ", str(Green.y, 1, 3), ",", str(Green.z, 1, 3)
+                  )
+  cylinder {<maxx, maxy, trf.z>, <maxx, 0, maxz>, smallr/100 pigment {rgb <0, 1, 0>}}
   
-  #local tlr = trr * <-1, 1, 1>;
-  
+  union {sphere {0, smallr/10 } cylinder {0, -x*0.5, smallr/200} cylinder {0, y*0.05, smallr/200}
+    translate Green pigment { rgb <0, 1, 0>}}
   
   sphere {blf, smallr/4}
   sphere {brf, smallr/4}
@@ -186,14 +176,12 @@
   sphere {tlf, smallr/4}
   sphere {trf, smallr/4}
 
-//  sphere {trr, smallr/30}
+  sphere {trr, smallr/30}
 //  sphere {tlr, smallr/30}
-
-//  sphere {trr, smallr/4}
-
 
     pigment {rgb x}
   }
+  #end // debug #if
 
   }
   

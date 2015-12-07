@@ -19,9 +19,10 @@
 //camera { location <1.6, 0.5, 0.6> look_at <1.30, 0.44, 0.88> angle 30}
 
 
-object {  pollywantahedron(1.5, 1, 1, /* toein */ 4, /* camber */ 22, 20, 12, 4, 0.1)  translate -y/2 }
-camera { location <1.3, 0.6, 0.4> look_at <1.05, 0.48, 0.85> angle 30}
-//camera { location <1.5, 0.6, -0.6> look_at <1.3, 0.5, 1> angle 30}
+object {  pollywantahedron(1, 1, 1, /* toein */ 4, /* camber */ 22, 20, 12, 4, 0.01)  translate -y/2 }
+//camera { location <1.3, 0.6, 0.4> look_at <1.05, 0.48, 0.85> angle 30}
+//camera { location <1.5, 0.7, -0.6> look_at <1.2, 0.5, 0.2> angle 30}
+camera { location <5, 3, -8> look_at <0, 0, 0.5> angle 20}
 
 
 global_settings {
