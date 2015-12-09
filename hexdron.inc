@@ -1,5 +1,23 @@
 // A pollywantahedron is a hexdron (cuboid, non-rectangular sides)
 // with extra constraints and an easier interface.
+// Parameters maxx, maxy, maxz (dimensions)
+//            toein, camber, casterfront, casterback, topslope (angles)
+// You are standing at a -Z looking +Z.  Imagine two parallel planes
+// on X=0 and X=maxx.  Tilt them both inward by camber degrees,
+// so their tops meet at an angle of 2*camber degrees along a line
+// parallel to the Z axis on x=maxx/2, y=some positive constant.
+// Their bottoms are still on x=0,maxx y=0.
+// Now yaw the +Z extents toward each other by toein degrees, pivoting
+// where they touch the Z axis at X=0 and maxx, Y=0, Z=0.
+// Now they meet along another line at some +Z.  These are the sides.
+// Add a front plane z=0.  Push its top forward by casterfront degrees.
+// Add a top plane Y=maxy.  Fix its front on the line where it intersects
+// the front plane, and pitch it down at the back by topslope degrees.
+// Add a back plane Z=maxz.  Fix its bottom at Y=0, pitch it toward you
+// by casterback degrees.
+// The bottom is the plane Y=0.
+// The minimum bounding box is {0, <maxx, maxy, maxz>}.
+// The last parameter is the radius to put on the edges.
 
 // A hexdron is a polyhedron with six quadrilateral sides, not necessarily
 // rectangles, which is the definition of "cuboid" according to some.
@@ -85,17 +103,17 @@
   #local camberr=radians(camber);
 
 
-  #local blf = <-maxx, 0, 0>; // bottom left front
+  #local blf = <0, 0, 0>; // bottom left front
   #local brf = <maxx, 0, 0>;  // bottom right front
-  #local blr = <(tan(toeinr) * maxz)-maxx, 0, maxz>; // bottom left rear.  Moved right by toe in.
-  #local brr = blr * <-1, 1, 1>; // bottom right rear
+  #local blr = <(tan(toeinr) * maxz), 0, maxz>; // bottom left rear.  Moved right by toe in.
+  #local brr = <maxx-blr.x, 0, maxz>; // bottom right rear
   
   // Top left front.  Moved right by camber, and +Z by front caster, then right and -Z by toe in
   #local tlf = <tan(camberr)*maxy, maxy, tan(casterfrontr)*maxy>; // this is before toe-in, and relative to blf
   #local tlf2 = vrotate(tlf, toein * y);  // rotated it clockwise (looking down) by toe-in.  tlf2.z <= tlf.z
   // Interested in how far its Z coord moved
-  #local tlf = <tlf2.x + (tlf.z - tlf2.z) * tan(toeinr) - maxx, maxy, tlf.z>;
-  #local trf = tlf * <-1, 1, 1>;
+  #local tlf = <tlf2.x + (tlf.z - tlf2.z) * tan(toeinr), maxy, tlf.z>;
+  #local trf = <maxx-tlf.x, maxy, tlf.z>;
 
   // top rear is harder.
 
@@ -121,7 +139,7 @@
 
 //  #local sidenormal = vrotate(vrotate(x, <0, 0, camber>), <0, -toein, 0>);
 
-  #local tlr = trr * <-1, 1, 1>;
+  #local tlr = <maxx-trr.x, trr.y, trr.z>;
 
   #if (0)
   union {
@@ -130,7 +148,7 @@
     plane { -z, 0 rotate casterfront * x} // front
     plane { z, 0 rotate -casterback * x translate maxz * z } // back
     plane { x, 0 rotate camber * z rotate -toein * y translate maxx * x} // right
-    plane { -x, 0 rotate -camber * z rotate toein * y translate -maxx * x} // left
+    plane { -x, 0 rotate -camber * z rotate toein * y } // left
     plane { -y, 0} // bottom
     plane { y, 0 rotate topslope* x translate <0, maxy, tan(casterfrontr)*maxy>} // top
     //hollow texture {pigment {rgbf <1, 1, 1, 0.6>} } interior { ior 1}
