@@ -8,7 +8,7 @@
 }
 
 
-camera { location <0, 10, -15> look_at <0, 0, 5> angle 30}
+camera { location <0, 10, -15> look_at <0, 0, 5> angle 10}
 
 
 global_settings {
@@ -80,12 +80,16 @@ plumb_right_n(0, 1.3, 180)
 plumb_right_n(1, 1, 180)
 plumb_twist_n(0, 20)
 plumb_twist_n(1, 20)
-plumb_right_n(0, 1.3, 180)
-plumb_right_n(1, 1, 180)
+plumb_right_n(0, 1.3, 130)
+plumb_right_n(1, 1, 90)
 
 plumb_tube_n(0, 1)
 plumb_tube_n(1, 1)
 
-plumb_radstep_n(0, 0.2, 0)
-plumb_radstep_n(0, 0.3, 0)
-plumb_radstep_n(0, 0.4, 0)
+plumb_radstep_n(0, 0.2, 0, 1)
+//plumb_tube_n(0, 0.1)
+
+plumb_left_n(0, 0.5, 90)
+
+plumb_radstep_n(0, 0.1, 0.1, 1)
+plumb_tube_n(0,0.12)
