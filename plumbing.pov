@@ -9,6 +9,7 @@
 
 
 camera { location <0, 10, -15> look_at <1.4, 0, 5> angle 20}
+camera { location <0, 10, -15> look_at <1.6, 0, 0> angle 5}
 
 
 global_settings {
@@ -105,7 +106,9 @@ plumb_start_n(2, 0.1)
 plumb_transform_n(0, transform{translate<1.6, 0, 0>})
 plumb_transform_n(1, transform{translate<1.9, 0, 0>})
 
-plumb_tube_n(0, 0.5)
+plumb_tube_n(0, 0.2)
+plumb_splines_n(0, 18, -0.2, 0)
+plumb_tube_n(0, 0.3)
 plumb_tube_n(1, 0.5)
 
 plumb_tube_n(0, 0.5)

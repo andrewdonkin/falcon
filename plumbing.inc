@@ -100,6 +100,18 @@
 #end
 
 
+#macro plumb_splines_n(n, num_splines, zed, ang_offset)
+// Not what you think.  More like splines on an drive shaft.
+  #for (i, 0, num_splines-1)
+    box {0, <plumb_rad[n]/5, plumb_rad[n]/2, zed>
+         translate <0, plumb_rad[n], 0>
+         rotate ((360 / num_splines * i) + ang_offset) * z
+         transform plumb_moves_accum[n]
+         }
+  #end
+#end
+
+
 //---------
 
 
