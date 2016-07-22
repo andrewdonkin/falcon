@@ -1,3 +1,5 @@
+#include "Math.inc"
+
 global_settings {
  //  ambient_light 0
   // ambient_light 0  radiosity {  }
@@ -15,8 +17,8 @@ plane { y, 0
 #local thick = 0.1;     // 1
 #local tinyrad=thick/4;
 
-#local rotwidth = 55;       // 1
-#local rotdepth = 45.3;     // 1.3
+#local rotwidth = 45;       // 1
+#local rotdepth = 45;     // 1.3
 
 #local xclippers = union {
       plane {  z 0               texture { pigment { color rgb<0,1,1> } } }
@@ -51,16 +53,26 @@ union {
       zclippers
     }
 //  }
+
+  // The far corner is always the tricky one
+  #local Zclipper = vrotate(-x, -rotwidth * z);
+  #local Xclipper = vrotate(-z, <rotdepth, 0, 0>);
+  #local Corner4 = vnormalize(vcross(Xclipper, Zclipper));
+  #warning str(VAngleD(Xclipper, Zclipper), 0, 0)
+  // Corner4 is now a vector indicating the corner at the intersection of the two clipping planes
+
   // four balls to join the rolled-off edges
   sphere { 0 tinyrad translate (bigrad + thick - tinyrad) * y}
   sphere { 0 tinyrad translate (bigrad + thick - tinyrad) * y rotate -rotwidth * z}
   sphere { 0 tinyrad translate (bigrad + thick - tinyrad) * y rotate  rotdepth * x}
-  sphere { 0 tinyrad translate (bigrad + thick - tinyrad) * y rotate <rotdepth, 0, -rotwidth>}
+  sphere { 0 tinyrad translate (bigrad + thick - tinyrad) * Corner4 }
   
   // larger quadrilateral cut out of a ball, smaller radius
   //#local rotdelta = degrees(asin (tinyrad / (bigrad - tinyrad)));
   difference {
-    sphere { 0, bigrad + thick - tinyrad }
+    union {
+      sphere { 0, bigrad + thick - tinyrad }
+        torus {bigrad+thick-tinyrad, tinyrad rotate (90-rotwidth)*z} }      
     sphere { 0, bigrad }
     plane {  x, -tinyrad }
     plane { -x, -tinyrad rotate -rotwidth * z }
@@ -77,11 +89,9 @@ union {
   cylinder { (bigrad) * y, (bigrad + thick - tinyrad) * y, tinyrad }
   cylinder { (bigrad) * y, (bigrad + thick - tinyrad) * y, tinyrad rotate -rotwidth * z}
   cylinder { (bigrad) * y, (bigrad + thick - tinyrad) * y, tinyrad rotate  rotdepth * x}
-  cylinder { (bigrad) * y, (bigrad + thick - tinyrad) * y, tinyrad rotate <rotdepth, 0, -rotwidth>}
-#if(0)
-#end  
+//  cylinder { (bigrad) * Corner4, (bigrad + thick - tinyrad) * Corner4, tinyrad }
   texture { pigment { color rgb<1,1,1> }}  
-  translate -(bigrad - 1 ) * y
+//  translate -(bigrad - 1 ) * y
   
   rotate 90*y
 }
@@ -92,18 +102,16 @@ union {// a few stakes
   cylinder { (bigrad - 1) * y, (bigrad + 2*thick)*y, 0.01 rotate <rotdepth, 0, 0> }
   cylinder { (bigrad - 1) * y, (bigrad + 2*thick)*y, 0.01 rotate <       0, 0, -rotwidth> }
   
-  #local stake=(bigrad + 3 * thick) * y;
-  #local newz= vrotate(z, <rotdepth, 0, 0>);
-  #local stake = vrotate(stake, <rotdepth, 0, 0>);
-  #local stake = vaxis_rotate(stake, newz, -rotwidth*0.82);
+  #local Zclipper = vrotate(-x, -rotwidth * z);
+  #local Xclipper = vrotate(-z, <rotdepth, 0, 0>);
+  #local stake = vnormalize(vcross(Xclipper, Zclipper));
   
-//  cylinder { (bigrad - 1) * y, (bigrad + 2*thick)*y, 0.01 rotate <rotdepth, 0, -rotwidth> }
+  cylinder { (bigrad - 1) * stake, (bigrad + 2*thick)*stake, 0.01 }
 
-  cylinder { 0, stake, 0.01 }
 
-  translate -(bigrad - 1) * y
+//  translate -(bigrad - 1) * y
 
-  rotate 90*y
+//  rotate 90*y
 
 
   texture { pigment { color rgb<1,1,0> }}
@@ -127,10 +135,10 @@ light_source {
 }
 #end
 
-light_source { <2, 0.5, -2> rgb 1
+light_source { <2, 1.5, -2> rgb 1
   looks_like {sphere {0, 0.1 texture {pigment {color rgb <1,1,1>}} finish { ambient 1 }}}
 }
 
 
 camera { location <1, 3, -3> look_at <0, 1, 0.5> }
-camera { location <2, 1, -3> look_at <0, 0.5, 0.5> angle 50 }
+camera { location <2, 1, -3> look_at <0.4, 0.85, 0> angle 3 }
