@@ -1,4 +1,9 @@
-#include "Math.inc"
+// Macro for generating a four-sided tile that would fit on a sphere.
+// The four upper edges and four edges along the sphere's radius are rounded.
+
+#version 3.7;
+#include "math.inc"
+#include "transforms.inc"
 
 global_settings {
  //  ambient_light 0
@@ -17,79 +22,105 @@ plane { y, 0
 #local thick = 0.1;     // 1
 #local tinyrad=thick/4;
 
-#local rotwidth = 45;       // 1
-#local rotdepth = 45;     // 1.3
+#local rotwidth = 58;       // 1
+#local rotdepth = 38;     // 1.3
 
-#local xclippers = union {
-      plane {  z 0               texture { pigment { color rgb<0,1,1> } } }
-      plane { -z 0 rotate  rotdepth * x texture { pigment { color rgb<0,1,1> } } }
-      };
-#local zclippers = union {
-      plane {  x 0               texture { pigment { color rgb<1,0,1> } } }
-      plane { -x 0 rotate -rotwidth * z texture { pigment { color rgb<1,0,1> } } }
-      };
-
+#local Frontplane = plane {  z 0 }
+#local Leftplane =  plane {  x 0 }
+#local Rearplane =  plane { -z 0 rotate  rotdepth * x }
+#local Rightplane = plane { -x 0 rotate -rotwidth * z }
 
 union {
-//  union {
-    difference { // quadrilateral cut out of a ball, sharp edges
-      sphere { 0, bigrad + thick }
-      sphere { 0, bigrad }
-      xclippers
-      zclippers
-    }
-    difference { // rolled-off edges on constant x
-      union {
-        torus {bigrad+thick-tinyrad, tinyrad rotate 90*z}
-        torus {bigrad+thick-tinyrad, tinyrad rotate (90-rotwidth)*z}
-      }
-      xclippers
-    }
-    difference { // rolled-off edges on constant z
-      union {
-        torus {bigrad+thick-tinyrad, tinyrad rotate (90+rotdepth)*x}
-        torus {bigrad+thick-tinyrad, tinyrad rotate 90*x}
-      }
-      zclippers
-    }
-//  }
+  difference { // quadrilateral cut out of a ball, sharp edges
+    sphere { 0, bigrad + thick }
+    sphere { 0, bigrad }
+    Frontplane Rearplane Leftplane Rightplane
+  }
 
   // The far corner is always the tricky one
-  #local Zclipper = vrotate(-x, -rotwidth * z);
-  #local Xclipper = vrotate(-z, <rotdepth, 0, 0>);
-  #local Corner4 = vnormalize(vcross(Xclipper, Zclipper));
-  #warning str(VAngleD(Xclipper, Zclipper), 0, 0)
-  // Corner4 is now a vector indicating the corner at the intersection of the two clipping planes
+  #local Rightclippernorm = vrotate(-x, -rotwidth * z);  // surface normal of right clipper
+  #local Rearclippernorm = vrotate(-z, <rotdepth, 0, 0>);  // surf normal of back clipper
+  #local Corner4Vec = vnormalize(vcross(Rearclippernorm, Rightclippernorm));  // Corner4 runs up their intersection
+  // Corner4Vec is now a vector indicating the corner at the intersection of the two clipping planes
+  #local Corner4IntAngle = VAngleD(Rightclippernorm, Rearclippernorm);
+  #warning concat("Corner4IntAngle=", str(VAngleD(Rightclippernorm, Rearclippernorm), 0, 0))
 
   // four balls to join the rolled-off edges
   sphere { 0 tinyrad translate (bigrad + thick - tinyrad) * y}
   sphere { 0 tinyrad translate (bigrad + thick - tinyrad) * y rotate -rotwidth * z}
   sphere { 0 tinyrad translate (bigrad + thick - tinyrad) * y rotate  rotdepth * x}
-  sphere { 0 tinyrad translate (bigrad + thick - tinyrad) * Corner4 }
-  
-  // larger quadrilateral cut out of a ball, smaller radius
-  //#local rotdelta = degrees(asin (tinyrad / (bigrad - tinyrad)));
+  sphere { 0 tinyrad translate (bigrad + thick - tinyrad) * Corner4Vec }
+
+  #local Rearplaneadjusted = plane { -z 0 rotate  rotdepth * x 
+    Axis_Rotate_Trans(Corner4Vec, -(90-Corner4IntAngle))  // trust me, is genius
+    texture { pigment { color rgb<1,0.5,0> } }
+  };
+
+  #local Rightplaneadjusted = plane { -x 0 rotate -rotwidth * z
+    Axis_Rotate_Trans(Corner4Vec, 90-Corner4IntAngle)  // even more genius without the negation
+    texture { pigment { color rgb<1,0.5,0> } }
+  };
+ 
+  // slightly larger quadrilateral cut out of a ball with a slightly smaller radius
+
+  // front
   difference {
     union {
       sphere { 0, bigrad + thick - tinyrad }
-        torus {bigrad+thick-tinyrad, tinyrad rotate (90-rotwidth)*z} }      
-    sphere { 0, bigrad }
-    plane {  x, -tinyrad }
-    plane { -x, -tinyrad rotate -rotwidth * z }
-    xclippers
-  }
-  difference {
-    sphere { 0, bigrad + thick - tinyrad }
+      torus {bigrad+thick-tinyrad, tinyrad rotate 90*x}
+    }
     sphere { 0, bigrad }
     plane {  z, -tinyrad }
     plane { -z, -tinyrad rotate rotdepth * x}
-    zclippers
+    Leftplane
+    Rightplane
   }
+  // left
+  difference {
+    union {
+      sphere { 0, bigrad + thick - tinyrad }
+      torus {bigrad+thick-tinyrad, tinyrad rotate 90*z}
+    }
+    sphere { 0, bigrad }
+    plane {  x, -tinyrad }
+    plane { -x, -tinyrad rotate -rotwidth * z }
+    Rearplane
+    Frontplane
+  }
+
+  // right
+  difference {
+    union {
+      sphere { 0, bigrad + thick - tinyrad }
+      torus {bigrad+thick-tinyrad, tinyrad rotate (90-rotwidth)*z}
+    }      
+    sphere { 0, bigrad }
+    plane {  x, -tinyrad }
+    plane { -x, -tinyrad rotate -rotwidth * z }
+    Rearplaneadjusted
+    Frontplane
+    //xclippers
+  }
+
+  // rear
+  difference {
+    union {
+      sphere { 0, bigrad + thick - tinyrad }
+      torus {bigrad+thick-tinyrad, tinyrad rotate (90+rotdepth)*x}
+    }
+    sphere { 0, bigrad }
+    plane {  z, -tinyrad }
+    plane { -z, -tinyrad rotate rotdepth * x}
+    Leftplane
+    Rightplaneadjusted
+  }
+
   // four little posts, along big radii, that form the rounded-off "vertical" corners of our tile
   cylinder { (bigrad) * y, (bigrad + thick - tinyrad) * y, tinyrad }
   cylinder { (bigrad) * y, (bigrad + thick - tinyrad) * y, tinyrad rotate -rotwidth * z}
   cylinder { (bigrad) * y, (bigrad + thick - tinyrad) * y, tinyrad rotate  rotdepth * x}
-//  cylinder { (bigrad) * Corner4, (bigrad + thick - tinyrad) * Corner4, tinyrad }
+  cylinder { (bigrad) * Corner4Vec, (bigrad + thick - tinyrad) * Corner4Vec, tinyrad }
+
   texture { pigment { color rgb<1,1,1> }}  
 //  translate -(bigrad - 1 ) * y
   
@@ -111,7 +142,7 @@ union {// a few stakes
 
 //  translate -(bigrad - 1) * y
 
-//  rotate 90*y
+  rotate 90*y
 
 
   texture { pigment { color rgb<1,1,0> }}
@@ -141,4 +172,4 @@ light_source { <2, 1.5, -2> rgb 1
 
 
 camera { location <1, 3, -3> look_at <0, 1, 0.5> }
-camera { location <2, 1, -3> look_at <0.4, 0.85, 0> angle 3 }
+camera { location <2, 1, -4> look_at <0.4, 0.85, 0> angle 50 }
