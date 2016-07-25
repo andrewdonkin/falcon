@@ -1,3 +1,73 @@
+#include "math.inc"
+#include "transforms.inc"
+
+// Macro for generating a four-sided tile that would fit on a sphere
+//  bounded by lines of longitude and latitude.
+// The four upper edges described by moving the radius along the lines
+//  of lat and long, and the four edges along the sphere's radius itself
+//  are rounded
+//  with any luck.
+// Dimensions are specified in degrees: two latitudes and a longitudinal width.
+//  Latitudes start at zero at the north pole and increase as they head south.
+//  One edge of plate will be at +x, other will be at the specified width
+//   clockwise about y for positive values (POV's natural rotation).
+
+#macro BallArmour(Bigrad,      // radius of the sphere this will sit on
+                  Lattop,      // latitude of plate's top edge
+                  Latbot,      // latitude of plate's lower edge, > Lattop
+                  Width,       // of plate in degrees
+                  Thick,       // ness of the plate
+                  Tinyrad      // radius of smoothing
+                 )
+
+// Ball armour.  Heh.  Heh.
+
+#if (Lattop >= Latbot)
+# error "nuh"
+#end
+
+#local _Width = abs(Width);
+
+#local Rightclipper = plane { -z, 0}
+#local Leftclipper  = plane { z, 0 rotate _Width * y}
+#local Topclipper = plane {-y, -Bigrad * sin(radians(90-Lattop))}
+#local Botclipper = plane { y, Bigrad * sin(radians(90-Latbot))}
+
+union
+{
+  difference
+  {
+    sphere {0, Bigrad + Thick}
+    sphere {0, Bigrad}
+    Leftclipper
+    Rightclipper
+    Topclipper
+    Botclipper
+  }
+
+  //difference {
+    torus {sin(radians(Lattop)) * (Bigrad + Thick - Tinyrad), Tinyrad
+           translate sin(radians(90-Lattop)) * (Bigrad + Thick - Tinyrad) * y
+           }
+    torus {sin(radians(Latbot)) * (Bigrad + Thick - Tinyrad), Tinyrad
+           translate sin(radians(90-Latbot)) * (Bigrad + Thick - Tinyrad) * y
+           }
+    torus {Bigrad + Thick - Tinyrad, Tinyrad
+           rotate 90*x
+           }
+    torus {Bigrad + Thick - Tinyrad, Tinyrad
+           rotate 90*x + _Width*y
+           }
+
+  #if (Width < 0)
+    scale <1, 1, -1>
+  #end
+
+}
+
+#end
+
+
 // Macro for generating a four-sided tile that would fit on a sphere.
 // The four upper edges and four edges along the sphere's radius are rounded.
 // Dimensions are specified in degrees.
@@ -8,9 +78,6 @@
 // Rear right corner is a total bastard.  As the dimensions increase
 //  toward 90 degrees the angle widens, and the corner eventually vanishes
 //  to form a spinnaker.
-
-#include "math.inc"
-#include "transforms.inc"
 
 #macro ArmourPlate1(bigrad,      // radius of sphere this will sit on
                     rotwidth,    // how far down to the right tile goes, in degrees
