@@ -4,9 +4,8 @@
 #include "armourplate.inc"
 
 global_settings {
- //  ambient_light 0
-  // ambient_light 0  radiosity {  }
-  // max_trace_level 200
+   // ambient_light 0
+   // ambient_light 0  radiosity {  } max_trace_level 200
   assumed_gamma 1
 }
 
@@ -63,16 +62,15 @@ light_source {
 #local tinyrad=thick/10;
 union {
   sphere {0, bigrad}
-  object { BallArmour(bigrad, 45, 55, 10, thick, tinyrad) pigment { rgb<1,0,1>} }
+  object { BallArmour(bigrad, 45, 65, 15, thick, tinyrad) pigment { rgb<1,0,1>} }
   texture { pigment { color rgb<1,0.5,0> }}
-  rotate 65*y
+  rotate 55*y
   translate bigrad*y
 }
 
-camera { location <0, bigrad*2, -bigrad*4> look_at <0, bigrad*1.4, 0> angle 20 }
+camera { location <0, bigrad*2, -bigrad*4> look_at <0.7, bigrad*1.5, 0> angle 10 }
 
-
-light_source { <2, 2, -2> rgb 1
+light_source { <0.5, 2, -2> rgb 1
   looks_like {sphere {0, 0.1 texture {pigment {color rgb <1,1,1>}} finish { ambient 1 }}}
 }
 

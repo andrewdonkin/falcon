@@ -30,8 +30,20 @@
 
 #local Rightclipper = plane { -z, 0}
 #local Leftclipper  = plane { z, 0 rotate _Width * y}
-#local Topclipper = plane {-y, -Bigrad * sin(radians(90-Lattop))}
-#local Botclipper = plane { y, Bigrad * sin(radians(90-Latbot))}
+#local Topclipper = union 
+  {
+    plane {-y, -(Bigrad + Thick) * cos(radians(Lattop))}
+    cone {0, 0, cos(radians(Lattop)) * (Bigrad + Thick) * 1.001 * y,
+                sin(radians(Lattop)) * (Bigrad + Thick)
+    }
+  }
+#local Botclipper = 
+  intersection {
+    plane { y, (Bigrad + Thick) * cos(radians(Latbot))}
+    cone {0, 0, cos(radians(Latbot)) * (Bigrad + Thick) * 1.001 * y,
+                sin(radians(Latbot)) * (Bigrad + Thick) inverse}
+  }
+
 
 union
 {
@@ -45,19 +57,31 @@ union
     Botclipper
   }
 
-  //difference {
+  difference {
     torus {sin(radians(Lattop)) * (Bigrad + Thick - Tinyrad), Tinyrad
-           translate sin(radians(90-Lattop)) * (Bigrad + Thick - Tinyrad) * y
-           }
+           translate cos(radians(Lattop)) * (Bigrad + Thick - Tinyrad) * y
+    }
+    Leftclipper
+    Rightclipper
+  }
+  difference {
     torus {sin(radians(Latbot)) * (Bigrad + Thick - Tinyrad), Tinyrad
-           translate sin(radians(90-Latbot)) * (Bigrad + Thick - Tinyrad) * y
-           }
-    torus {Bigrad + Thick - Tinyrad, Tinyrad
-           rotate 90*x
-           }
-    torus {Bigrad + Thick - Tinyrad, Tinyrad
-           rotate 90*x + _Width*y
-           }
+           translate cos(radians(Latbot)) * (Bigrad + Thick - Tinyrad) * y
+    }
+    Leftclipper
+    Rightclipper
+  }
+  difference {
+    torus {Bigrad + Thick - Tinyrad, Tinyrad rotate 90*x}
+    Topclipper
+    Botclipper
+  }
+  difference {
+    torus {Bigrad + Thick - Tinyrad, Tinyrad rotate 90*x + _Width*y }
+    Topclipper
+    Botclipper
+  }
+  
 
   #if (Width < 0)
     scale <1, 1, -1>
