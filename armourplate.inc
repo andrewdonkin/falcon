@@ -27,26 +27,53 @@
 #end
 
 #local _Width = abs(Width);
+// What angle do we need to increase the height by to include the slight
+// swelling caused by Tinyrad?  See calculation for "littleangle" on paper.
+#local Latdelta = degrees(asin(Tinyrad / (Bigrad + Thick - Tinyrad)));
+#local Latdelta_r = asin(Tinyrad / (Bigrad + Thick - Tinyrad));
+
+#if (Latbot + Latdelta >= 88)
+# error concat ("nuh ", str(Latbot + Latdelta, 0, 2));
+#end
 
 #local Rightclipper = plane { -z, 0}
 #local Leftclipper  = plane { z, 0 rotate _Width * y}
-#local Topclipper = union 
-  {
-    plane {-y, -(Bigrad + Thick) * cos(radians(Lattop))}
-    cone {0, 0, cos(radians(Lattop)) * (Bigrad + Thick) * 1.001 * y,
-                sin(radians(Lattop)) * (Bigrad + Thick)
-    }
-  }
-#local Botclipper = 
-  intersection {
-    plane { y, (Bigrad + Thick) * cos(radians(Latbot))}
+
+// Righer, Lefter clippers clip the sphere wider to accommodate round-off
+#local Righterclipper = plane { -z, Tinyrad}
+#local Lefterclipper  = plane { z, -Tinyrad rotate _Width * y}
+
+#local Topclipper = union {
+    plane {-y,  cos(radians(Lattop)) * -(Bigrad + Thick) }
+    cone {0, 0, cos(radians(Lattop)) *  (Bigrad + Thick) * 1.001 * y,
+                sin(radians(Lattop)) *  (Bigrad + Thick) }
+}
+#local Botclipper = intersection {
+    plane { y,  cos(radians(Latbot)) * (Bigrad + Thick)}
     cone {0, 0, cos(radians(Latbot)) * (Bigrad + Thick) * 1.001 * y,
                 sin(radians(Latbot)) * (Bigrad + Thick) inverse}
-  }
-
+}
+// Topper, Botter clippers clip the sphere taller to accommodate round-off.
+// Trouble is they fit perfectly with conical posts.  The left and right
+// clippers do not.
+#local Topperclipper = union {
+  plane {-y,  cos(radians(Lattop)-Latdelta_r) * -(Bigrad + Thick)}
+  cone {0, 0, cos(radians(Lattop)-Latdelta_r) *  (Bigrad + Thick) * 1.001 * y,
+              sin(radians(Lattop)-Latdelta_r) *  (Bigrad + Thick) }
+}
+#local Botterclipper = intersection {
+  plane { y,  cos(radians(Latbot)+Latdelta_r) * (Bigrad + Thick)}
+  cone {0,
+           // hard to explain why I have to set a radius on the bottom of the cone here.  See paper.
+           // It means that as Latbot+Latdelta approaches 90, rounding errors appear as artifacts
+           Tinyrad/cos(radians(Latbot)+Latdelta_r),
+           cos(radians(Latbot)+Latdelta_r) * (Bigrad + Thick) * y,
+           sin(radians(Latbot)+Latdelta_r) * (Bigrad + Thick) inverse}
+}
 
 union
 {
+  // The armour plate, full thickness, sharp edges
   difference
   {
     sphere {0, Bigrad + Thick}
@@ -57,30 +84,74 @@ union
     Botclipper
   }
 
+  // Four rolled-off edges:
+  // Top
   difference {
     torus {sin(radians(Lattop)) * (Bigrad + Thick - Tinyrad), Tinyrad
-           translate cos(radians(Lattop)) * (Bigrad + Thick - Tinyrad) * y
-    }
+           translate cos(radians(Lattop)) * (Bigrad + Thick - Tinyrad) * y }
     Leftclipper
     Rightclipper
   }
+  // Bottom
   difference {
     torus {sin(radians(Latbot)) * (Bigrad + Thick - Tinyrad), Tinyrad
-           translate cos(radians(Latbot)) * (Bigrad + Thick - Tinyrad) * y
-    }
+           translate cos(radians(Latbot)) * (Bigrad + Thick - Tinyrad) * y}
     Leftclipper
     Rightclipper
   }
+  // Through X axis, which is the right side if Width>0
   difference {
     torus {Bigrad + Thick - Tinyrad, Tinyrad rotate 90*x}
     Topclipper
     Botclipper
   }
+  // Left side
   difference {
     torus {Bigrad + Thick - Tinyrad, Tinyrad rotate 90*x + _Width*y }
     Topclipper
     Botclipper
   }
+  // Four balls in the corners
+  sphere {(Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Lattop*-z}
+  sphere {(Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Latbot*-z}
+  sphere {(Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Lattop*-z rotate _Width * y}
+  sphere {(Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Latbot*-z rotate _Width * y}
+  
+  // Now it looks a bit like a table, with the top overhanging the sides.
+
+  difference
+  {
+    sphere {0, Bigrad + Thick - Tinyrad}
+    sphere {0, Bigrad}
+    Lefterclipper
+    Righterclipper
+    Topclipper
+    Botclipper
+  }
+  // Now just overhanging top and bottom.
+  difference
+  {
+    sphere {0, Bigrad + Thick - Tinyrad}
+    sphere {0, Bigrad}
+    Leftclipper
+    Rightclipper
+    Topperclipper
+    Botterclipper
+  }
+  // Now there are square cutouts at the corners to fill.
+  
+  #if (0)
+    // These rounded corners have bigger radii at the outside of the plate
+    cone {0, 0, (Bigrad + Thick - Tinyrad) * y, Tinyrad  rotate Lattop*-z}
+    cone {0, 0, (Bigrad + Thick - Tinyrad) * y, Tinyrad  rotate Latbot*-z}
+    cone {0, 0, (Bigrad + Thick - Tinyrad) * y, Tinyrad  rotate Lattop*-z rotate _Width * y}
+    cone {0, 0, (Bigrad + Thick - Tinyrad) * y, Tinyrad  rotate Latbot*-z rotate _Width * y}
+  #else
+    cylinder {0, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Lattop*-z} 
+    cylinder {0, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Latbot*-z}
+    cylinder {0, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Lattop*-z rotate _Width * y}
+    cylinder {0, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Latbot*-z rotate _Width * y}
+  #end    
   
 
   #if (Width < 0)

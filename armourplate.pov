@@ -59,18 +59,18 @@ light_source {
 
 #local bigrad = 1.48 ; // big radius.  Not bi grad.  77.48
 #local thick = 0.15;     // 1
-#local tinyrad=thick/10;
+#local tinyrad=thick/20;
 union {
   sphere {0, bigrad}
-  object { BallArmour(bigrad, 45, 65, 15, thick, tinyrad) pigment { rgb<1,0,1>} }
+  object { BallArmour(bigrad, 15, 87, 35, thick, tinyrad) pigment { rgb<1,0,1>} }
   texture { pigment { color rgb<1,0.5,0> }}
   rotate 55*y
   translate bigrad*y
 }
 
-camera { location <0, bigrad*2, -bigrad*4> look_at <0.7, bigrad*1.5, 0> angle 10 }
+camera { location <0, bigrad*3, -bigrad*8> look_at <0.8, bigrad*1.3, 0> angle 26 }
 
-light_source { <0.5, 2, -2> rgb 1
-  looks_like {sphere {0, 0.1 texture {pigment {color rgb <1,1,1>}} finish { ambient 1 }}}
+light_source { <0.5, 1, -4> rgb 1
+//  looks_like {sphere {0, 0.1 texture {pigment {color rgb <1,1,1>}} finish { ambient 1 }}}
 }
 
