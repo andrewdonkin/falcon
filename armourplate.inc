@@ -71,7 +71,7 @@
            sin(radians(Latbot)+Latdelta_r) * (Bigrad + Thick) inverse}
 }
 
-union
+merge
 {
   // The armour plate, full thickness, sharp edges
   difference
@@ -102,12 +102,14 @@ union
   // Through X axis, which is the right side if Width>0
   difference {
     torus {Bigrad + Thick - Tinyrad, Tinyrad rotate 90*x}
+    plane {x, 0}
     Topclipper
     Botclipper
   }
   // Left side
   difference {
     torus {Bigrad + Thick - Tinyrad, Tinyrad rotate 90*x + _Width*y }
+    plane {x, 0 rotate _Width*y}
     Topclipper
     Botclipper
   }
@@ -121,8 +123,8 @@ union
 
   difference
   {
-    sphere {0, Bigrad + Thick - Tinyrad}
-    sphere {0, Bigrad}
+    sphere {0, (Bigrad + Thick - Tinyrad)*0.9998}
+    sphere {0, Bigrad * 0.9998}
     Lefterclipper
     Righterclipper
     Topclipper
@@ -131,8 +133,8 @@ union
   // Now just overhanging top and bottom.
   difference
   {
-    sphere {0, Bigrad + Thick - Tinyrad}
-    sphere {0, Bigrad}
+    sphere {0, (Bigrad + Thick - Tinyrad) *0.9999}
+    sphere {0, Bigrad*0.9999}
     Leftclipper
     Rightclipper
     Topperclipper
@@ -147,10 +149,10 @@ union
     cone {0, 0, (Bigrad + Thick - Tinyrad) * y, Tinyrad  rotate Lattop*-z rotate _Width * y}
     cone {0, 0, (Bigrad + Thick - Tinyrad) * y, Tinyrad  rotate Latbot*-z rotate _Width * y}
   #else
-    cylinder {0, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Lattop*-z} 
-    cylinder {0, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Latbot*-z}
-    cylinder {0, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Lattop*-z rotate _Width * y}
-    cylinder {0, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Latbot*-z rotate _Width * y}
+    cylinder {Bigrad * y, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Lattop*-z} 
+    cylinder {Bigrad * y, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Latbot*-z}
+    cylinder {Bigrad * y, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Lattop*-z rotate _Width * y}
+    cylinder {Bigrad * y, (Bigrad + Thick - Tinyrad) * y, Tinyrad rotate Latbot*-z rotate _Width * y}
   #end    
   
 
@@ -186,7 +188,7 @@ union
 #local Rearplane =  plane { -z 0 rotate  rotdepth * x }
 #local Rightplane = plane { -x 0 rotate -rotwidth * z }
 
-union {
+merge {
   difference { // quadrilateral cut out of a ball, sharp edges
     sphere { 0, bigrad + thick }
     sphere { 0, bigrad }
@@ -228,7 +230,7 @@ union {
 
   // front
   difference {
-    union {
+    merge {
       sphere { 0, bigrad + thick - tinyrad }
       torus {bigrad+thick-tinyrad, tinyrad rotate 90*x}
     }
@@ -240,7 +242,7 @@ union {
   }
   // left
   difference {
-    union {
+    merge {
       sphere { 0, bigrad + thick - tinyrad }
       torus {bigrad+thick-tinyrad, tinyrad rotate 90*z}
     }
@@ -253,7 +255,7 @@ union {
 
   // right
   difference {
-    union {
+    merge {
       sphere { 0, bigrad + thick - tinyrad }
       torus {bigrad+thick-tinyrad, tinyrad rotate (90-rotwidth)*z}
     }      
@@ -267,7 +269,7 @@ union {
 
   // rear
   difference {
-    union {
+    merge {
       sphere { 0, bigrad + thick - tinyrad }
       torus {bigrad+thick-tinyrad, tinyrad rotate (90+rotdepth)*x}
     }

@@ -9,9 +9,9 @@ global_settings {
   assumed_gamma 1
 }
 
-plane { y, 0
+box {<-50, -1, -10>, <50, 0, 10>
   pigment {
-    checker color rgb <0,0,0>, colour rgb <1,1,1>
+    checker color rgb <1,0,0, 0>, colour rgbf <0,1,1, 0>
   }
 }
 
@@ -61,16 +61,15 @@ light_source {
 #local thick = 0.15;     // 1
 #local tinyrad=thick/20;
 union {
-  sphere {0, bigrad}
-  object { BallArmour(bigrad, 15, 87, 35, thick, tinyrad) pigment { rgb<1,0,1>} }
-  texture { pigment { color rgb<1,0.5,0> }}
+  sphere {0, bigrad pigment {rgbf<1, 0.5, 0, 0.7> } interior {ior 1.1}}
+  object { BallArmour(bigrad, 15, 65, 35, thick, tinyrad) pigment { rgbf<1,0,1, 0>} }
   rotate 55*y
   translate bigrad*y
 }
 
-camera { location <0, bigrad*3, -bigrad*8> look_at <0.8, bigrad*1.3, 0> angle 26 }
+camera { location <-1, bigrad*3, -bigrad*8> look_at <0.8, bigrad*1.3, 0> angle 16 }
 
-light_source { <0.5, 1, -4> rgb 1
+light_source { <-1.5, 3, -4> rgb 1
 //  looks_like {sphere {0, 0.1 texture {pigment {color rgb <1,1,1>}} finish { ambient 1 }}}
 }
 
