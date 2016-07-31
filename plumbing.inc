@@ -1,4 +1,6 @@
 #include "shapes3.inc"
+#declare pseed = seed(1);
+
 
 // This file defines macros that create and join segments of pipe to form plumbing.
 // Each macro call creates a new segment and joins to the end of the previous.
@@ -102,13 +104,24 @@
 
 #macro plumb_splines_n(n, num_splines, zed, ang_offset)
 // Not what you think.  More like splines on an drive shaft.
+difference{
+union {
   #for (i, 0, num_splines-1)
+  object {
+    Segment_of_CylinderRing(plumb_rad[n]*1.5, 0, zed, 360/num_splines/2)
+    rotate <90, 0, 0>
+    translate <-plumb_rad[n], 0, 0> rotate <rand(pseed)*2, rand(pseed)*2, 0> translate <plumb_rad[n], 0, 0>
+#if (0)
     box {0, <plumb_rad[n]/5, plumb_rad[n]/2, zed>
          translate <0, plumb_rad[n], 0>
-         rotate ((360 / num_splines * i) + ang_offset) * z
-         transform plumb_moves_accum[n]
-         }
   #end
+         rotate ((360 / num_splines * i) + ang_offset) * z
+         }
+#end
+} // union
+  cylinder{<0, 0, -zed*1.1>, <0, 0, zed*1.1>, plumb_rad[n]}
+  transform plumb_moves_accum[n]
+}
 #end
 
 

@@ -1,4 +1,4 @@
-
+#version 3.7;
 #default {
   texture {
     pigment { rgb 1 }
@@ -107,7 +107,7 @@ plumb_transform_n(0, transform{translate<1.6, 0, 0>})
 plumb_transform_n(1, transform{translate<1.9, 0, 0>})
 
 plumb_tube_n(0, 0.2)
-plumb_splines_n(0, 18, -0.2, 0)
+plumb_splines_n(0, 18, -0.22, 0)
 plumb_tube_n(0, 0.3)
 plumb_tube_n(1, 0.5)
 
