@@ -28,6 +28,9 @@
 #end
 
 //=====================================================
+// roughbox
+//
+//
 #macro roughbox (corner2, Rsmall, NumChipsX, NumBulges)
 
 //  #local num_chips_y = abs(corner2.x) / num_chips_x * abs(corner2.y);
@@ -44,10 +47,8 @@
 
 #warning concat("Corner2 ", str(corner2.x,0,3), " NumBulges ", str(NumBulges, 0, 0))
 
-#local BulgeArray = array[NumBulges*2];
-#local BulgeArrayZ = array[NumBulgesZ*2];
-
-difference {
+#if (NumChipsX > 0) difference #else object #end
+{
   union {
     box {<Rsmall, 0, Rsmall>, <XX, corner2.y, ZZ>} //tall
     box {<0, 0, Rsmall>, <corner2.x, YY, ZZ>} // wide
@@ -66,40 +67,44 @@ difference {
     sphere {corner2-Rsmall, Rsmall} // right rear corner
     // all that effort to build a Round_Box from shapes.inc without the curves on z=0
     // bulges on the front
-    RandArray(BulgeArray, corner2.x - Rsmall*2)
-    #for (I, 0, NumBulges-1)
-      #local BulgeStart = BulgeArray[I * 2] + Rsmall;
-      #local BulgeStop = BulgeArray[I * 2 + 1] + Rsmall;
-      cylinder {0, (BulgeStop-BulgeStart) * x, Rsmall*1.1 translate <BulgeStart, corner2.y-Rsmall, Rsmall>}
-      sphere {<BulgeStart, corner2.y-Rsmall, Rsmall>, Rsmall*1.1}
-      sphere {<BulgeStop, corner2.y-Rsmall, Rsmall>, Rsmall*1.1}
-    #end
-    // bulges on the back
-    RandArray(BulgeArray, corner2.x - Rsmall*2)
-    #for (I, 0, NumBulges-1)
-      #local BulgeStart = BulgeArray[I * 2] + Rsmall;
-      #local BulgeStop = BulgeArray[I * 2 + 1] + Rsmall;
-      cylinder {0, (BulgeStop-BulgeStart) * x, Rsmall*1.1 translate <BulgeStart, corner2.y-Rsmall, ZZ>}
-      sphere {<BulgeStart, corner2.y-Rsmall, ZZ>, Rsmall*1.1}
-      sphere {<BulgeStop, corner2.y-Rsmall, ZZ>, Rsmall*1.1}
-    #end
-    // bulges on the left
-    RandArray(BulgeArrayZ, corner2.z - Rsmall*2)
-    #for (I, 0, NumBulgesZ-1)
-      #local BulgeStart = BulgeArrayZ[I * 2] + Rsmall;
-      #local BulgeStop = BulgeArrayZ[I * 2 + 1] + Rsmall;
-      cylinder {0, (BulgeStop-BulgeStart) * z, Rsmall*1.1 translate <Rsmall, YY, BulgeStart>}
-      sphere {<Rsmall, YY, BulgeStart>, Rsmall*1.1}
-      sphere {<Rsmall, YY, BulgeStop>, Rsmall*1.1}
-    #end
-    // bulges on the right
-    RandArray(BulgeArrayZ, corner2.z - Rsmall*2)
-    #for (I, 0, NumBulgesZ-1)
-      #local BulgeStart = BulgeArrayZ[I * 2] + Rsmall;
-      #local BulgeStop = BulgeArrayZ[I * 2 + 1] + Rsmall;
-      cylinder {0, (BulgeStop-BulgeStart) * z, Rsmall*1.1 translate <XX, YY, BulgeStart>}
-      sphere {<XX, YY, BulgeStart>, Rsmall*1.1}
-      sphere {<XX, YY, BulgeStop>, Rsmall*1.1}
+    #if (NumBulges > 0)
+      #local BulgeArray = array[NumBulges*2];
+      #local BulgeArrayZ = array[NumBulgesZ*2];
+      RandArray(BulgeArray, corner2.x - Rsmall*2)
+      #for (I, 0, NumBulges-1)
+        #local BulgeStart = BulgeArray[I * 2] + Rsmall;
+        #local BulgeStop = BulgeArray[I * 2 + 1] + Rsmall;
+        cylinder {0, (BulgeStop-BulgeStart) * x, Rsmall*1.1 translate <BulgeStart, corner2.y-Rsmall, Rsmall>}
+        sphere {<BulgeStart, corner2.y-Rsmall, Rsmall>, Rsmall*1.1}
+        sphere {<BulgeStop, corner2.y-Rsmall, Rsmall>, Rsmall*1.1}
+      #end
+      // bulges on the back
+      RandArray(BulgeArray, corner2.x - Rsmall*2)
+      #for (I, 0, NumBulges-1)
+        #local BulgeStart = BulgeArray[I * 2] + Rsmall;
+        #local BulgeStop = BulgeArray[I * 2 + 1] + Rsmall;
+        cylinder {0, (BulgeStop-BulgeStart) * x, Rsmall*1.1 translate <BulgeStart, corner2.y-Rsmall, ZZ>}
+        sphere {<BulgeStart, corner2.y-Rsmall, ZZ>, Rsmall*1.1}
+        sphere {<BulgeStop, corner2.y-Rsmall, ZZ>, Rsmall*1.1}
+      #end
+      // bulges on the left
+      RandArray(BulgeArrayZ, corner2.z - Rsmall*2)
+      #for (I, 0, NumBulgesZ-1)
+        #local BulgeStart = BulgeArrayZ[I * 2] + Rsmall;
+        #local BulgeStop = BulgeArrayZ[I * 2 + 1] + Rsmall;
+        cylinder {0, (BulgeStop-BulgeStart) * z, Rsmall*1.1 translate <Rsmall, YY, BulgeStart>}
+        sphere {<Rsmall, YY, BulgeStart>, Rsmall*1.1}
+        sphere {<Rsmall, YY, BulgeStop>, Rsmall*1.1}
+      #end
+      // bulges on the right
+      RandArray(BulgeArrayZ, corner2.z - Rsmall*2)
+      #for (I, 0, NumBulgesZ-1)
+        #local BulgeStart = BulgeArrayZ[I * 2] + Rsmall;
+        #local BulgeStop = BulgeArrayZ[I * 2 + 1] + Rsmall;
+        cylinder {0, (BulgeStop-BulgeStart) * z, Rsmall*1.1 translate <XX, YY, BulgeStart>}
+        sphere {<XX, YY, BulgeStart>, Rsmall*1.1}
+        sphere {<XX, YY, BulgeStop>, Rsmall*1.1}
+      #end
     #end
   } // end positive objects.  Now chip away at it
   #for (I, 1, NumChipsX)
@@ -109,9 +114,8 @@ difference {
       rotate -(30+rand(rseed)*30)*x 
       translate <rand(rseed) * corner2.x, corner2.y, 0>
     }
-    
   #end // for, chips
-  
+  bounded_by {box{0, corner2}}  
 }
 
 
@@ -124,10 +128,13 @@ difference {
 //=====================================================
 #macro roughcylinder (end1, end2, R, num_chips, NumBulges)
 
-#local BulgeArray = array[NumBulges*2];
-RandArray(BulgeArray, 360)
+#if (NumBulges > 0)
+# local BulgeArray = array[NumBulges*2];
+  RandArray(BulgeArray, 360)
+#end
 
-difference {
+#if (num_chips > 0) difference #else object #end
+{
 //union{
   merge {
     //Round_Cylinder_Tube(end1, end2, R, R/10, 1, 1) minus the bottom
@@ -136,17 +143,19 @@ difference {
     torus{R*0.9, R/10 translate (vlength(end2-end1) - R/10)*y}
     //, R/10, 1, 1)
     // a bunch of bulges around the top of the cylinder
-    merge {
-      #for (I, 0, NumBulges-1)
-        #local ArcStart = BulgeArray[I * 2];
-        #local ArcAngle = BulgeArray[I * 2 + 1] - ArcStart;
-        object { Segment_of_Torus(R*0.9, R*0.11, ArcAngle) rotate ArcStart*y}
-        // A sphere at each end to make our bulge smooth
-        sphere { R*0.9*x, R*0.11 rotate ArcStart * y}
-        sphere { R*0.9*x, R*0.11 rotate (ArcStart + ArcAngle) * y}
-      #end
-      translate (vlength(end2 - end1) - R/10) * y // thanks shapes3.inc
-    }  // merge of bulges
+    #if (NumBulges > 0)
+      merge {
+        #for (I, 0, NumBulges-1)
+          #local ArcStart = BulgeArray[I * 2];
+          #local ArcAngle = BulgeArray[I * 2 + 1] - ArcStart;
+          object { Segment_of_Torus(R*0.9, R*0.11, ArcAngle) rotate ArcStart*y}
+          // A sphere at each end to make our bulge smooth
+          sphere { R*0.9*x, R*0.11 rotate ArcStart * y}
+          sphere { R*0.9*x, R*0.11 rotate (ArcStart + ArcAngle) * y}
+        #end
+        translate (vlength(end2 - end1) - R/10) * y // thanks shapes3.inc
+      }  // merge of bulges
+    #end // #if any bulges
   } // end merge of additive objects.  Now subtract:
   #for (I, 1, num_chips, 1)
     #if (rand(rseed) > 0.5)
@@ -165,10 +174,12 @@ difference {
       translate (vlength(end2 - end1) - R/10) * y // thanks shapes3.inc
     }
   #end // for chips
+  bounded_by {cylinder {0, vlength(end2-end1)*y, R}}
   Point_At_Trans(end2 - end1)
   translate end1
   normal { dents R/5 scale R/10 }
-} // end difference
+
+} // end difference/object
 #end // roughbox macro
 
 // =======================================================

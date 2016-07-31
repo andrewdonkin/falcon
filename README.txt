@@ -26,3 +26,10 @@ Two insane modellers:
 
 http://www.ketzer.com/MF_making_page.html
 http://www.m-moeslund.dk/falcon.html
+
+Parametrics:
+  
+    http://www.econym.demon.co.uk/isotut/parametric.htm
+    http://www.f-lohmueller.de/pov_tut/all_shapes/shapes570e.htm
+  For burns/impacts:
+    http://www.f-lohmueller.de/pov_tut/all_shapes/shapes655e.htm

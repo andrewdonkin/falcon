@@ -67,16 +67,17 @@
     union {
       union {
         object {
-          roughcylinder(-0.1*z, 0.1*z, 0.15)
-          scale 1.5*y
+//          roughcylinder(-0.1*z, 0.1*z, 0.15)
+          roughcylinder(0.1*z, -0.1*z, 0.15, 15, 5)
+          scale <1,1.5,1>
         }
-        sphere {<0, 0.2, -0.1>, 0.03}
-        sphere {<0, -0.2, -0.1>, 0.03}
+        sphere {<0, 0.18, -0.1>, 0.03}
+        sphere {<0, -0.18, -0.1>, 0.03}
         rotate (-20-(rand(randseed)*30))*z
       }
       difference {
-        roughcylinder(<0, 0, -0.2>, <0, 0, 0>, 0.13)
-        roughcylinder(<0, 0, -0.3>, <0, 0, -0.1>, 0.10)
+        roughcylinder(<0, 0, 0>, <0, 0, -0.2>, 0.13, 15, 5)
+        cylinder{<0, 0, -0.3>, <0, 0, -0.1>, 0.10}
       }
     }
   #end // V12cyl macro
@@ -84,10 +85,11 @@
   difference {
     // a rectangular section in the centre minus a hole for a headlight
     union {
-      box {<0, -0.35, -0.3>, <2.4, 0.35, 0>} // between the two banks of cylinders
-      roughbox (<0.1, -0.3, -0.4>, <2.3, 0.3, 0>) // smaller, poking further toward -Z
+//      box {<0, -0.35, -0.3>, <2.4, 0.35, 0>} // between the two banks of cylinders
+      object {roughbox (<2.4, 0.3, 0.7>, 0.03, 10, 10) rotate -90*x translate <0, -0.35, 0>} // between the two banks of cylinders
+      object {roughbox (<2.2, 0.4, 0.6>, 0.02, 10, 20) rotate -90*x translate <0.1, -0.3, 0>} // smaller, poking further toward -Z
       #for (I, -0.2, 0.2, .03)   // vanes
-        box{<0.15+rand(roughseed)/40, I-0.01, -0.45>, <2.25-rand(roughseed)/40, I+0.01, 0>}
+        box{<0.15+rand(rseed)/40, I-0.01, -0.45>, <2.25-rand(rseed)/40, I+0.01, 0>}
       #end // for, vanes
       box {<0.8, -0.05, -.45>, <0.9, 0.05, 0>} // two flat patches in the vanes
       box {<1.5, -0.05, -.45>, <1.6, 0.05, 0>}
@@ -96,8 +98,8 @@
       cylinder {<0.1, -0.4, -0.04>, <2.3, -0.4, -0.04> 0.03}
       // cylinders, two banks of six
       #for (I, 0.3, 2.1, 0.36)
-        object {V12plug(roughseed) rotate 10*x translate <I, 0.7 + rand(roughseed)/40, 0>}
-        object {V12plug(roughseed) rotate -10*x translate <I, -0.7 - rand(roughseed)/40, 0>}
+        object {V12plug(rseed) rotate 10*x translate <I, 0.7 + rand(rseed)/40, 0>}
+        object {V12plug(rseed) rotate -10*x translate <I, -0.7 - rand(rseed)/40, 0>}
         cylinder {<I, -0.6, -0.05>, <I, 0.6, -0.05>, 0.03}
       #end // for
     }
@@ -114,13 +116,14 @@
 #if (1)
   difference {
     union {
-      difference {
+//      difference {
 	      intersection { // 45 dia shells
 	        sphere { <0, -72.64, 0>, 77.48 } // top shell
 	        sphere { <0,  72.64, 0>, 77.48 } // bottom
 	        cylinder { <0, -5, 0>, <0, 5, 0>, 22.5 }
-      	}
-      }
+	      }
+	      // TODO subtract service ports here
+//      }
     
       intersection { // 48 dia shells
 	      union {
