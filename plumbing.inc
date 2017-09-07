@@ -1,4 +1,4 @@
-#include "shapes3.inc"
+    #include "shapes3.inc"
 #declare pseed = seed(1);
 
 
@@ -119,7 +119,8 @@ union {
          }
 #end
 } // union
-  cylinder{<0, 0, -zed*1.1>, <0, 0, zed*1.1>, plumb_rad[n]}
+  // subtract away the interior, otherwise it looks like a sunburst
+  cylinder{<0, 0, -zed*1.1>, <0, 0, zed*1.1>, plumb_rad[n]*0.8}
   transform plumb_moves_accum[n]
 }
 #end

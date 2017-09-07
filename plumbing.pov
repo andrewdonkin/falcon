@@ -39,9 +39,7 @@ plumb_left(20, 0.9)
 plumb_tube(3)
 
 plumb_right(20, 3)
-plumb_twist(20)
-
-
+plumb_twist(20)                     
 plumb_tube(1)
 
 plumb_right(45, 0.3)
@@ -77,9 +75,8 @@ plumb_transform_n(1, transform{translate<1.3, 0, 0>})
 
 plumb_tube_n(0, 0.5)
 plumb_tube_n(1, 0.5)
-
-plumb_left_n(0, 45, 0)
-plumb_tube_n(0, sqrt(2)/10)
+plumb_left_n(0, 45, 0) // Z increases by 0.1 with zero major radius param
+plumb_tube_n(0, sqrt(2)/10) // Z increases by 0.1
 plumb_right_n(0, 45, 0)
 // Have moved forward three times the radius.
 plumb_tube_n(0, 0.2)
@@ -131,3 +128,41 @@ plumb_left_n(0, 0.5, 90)
 
 plumb_radstep_n(0, 0.1, 0, "n")
 plumb_tube_n(0,0.22)
+
+#undef F
+#declare  F = function {y+cos(z*2*pi)*0.02-1-0.02}
+isosurface {
+  function { F(x, sqrt(y*y+x*x), z*2) }
+  contained_by {box {<-1.5,-1.1,0>,<1.5,1.1,4>}}
+  scale 0.1
+  translate <1.9, 0, -0.4>
+}
+#undef F
+#declare  F = function {y-cos(z*2*pi)*0.02-1+0.02}
+isosurface {
+  function { F(x, sqrt(y*y+x*x), z*2) }
+  contained_by {box {<-1.1,-1.1,0>,<1.1,1.1,4>}}
+  scale 0.1
+  translate <1.9, 0, -0.9>
+}
+
+#if (0)  
+parametric{
+  function{ cos(u)+0.1*sin(v*pi)} // x(u,v)
+  function{ sin(u)+0.1*sin(v*pi)}   // y(u,v)
+  function{ v }        // z(u,v)
+  <0,0>,<2*pi,4>  // start, end(u,v)
+  contained_by {box {<-1.5,-1.5,0>,<1.5,1.5,4>}}
+  max_gradient 4
+  accuracy 0.003
+  precompute 9 x,y,z
+  scale 0.1
+  translate <1.9, 0, -0.4>
+}
+ #end
+
+plumb_start_n(1,0.1)
+plumb_transform_n(0, transform{translate<1.9, 0, -0.5>})
+plumb_tube_n(0, 0.1)
+
+
