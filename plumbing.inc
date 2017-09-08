@@ -1,4 +1,4 @@
-    #include "shapes3.inc"
+#include "shapes3.inc"
 #declare pseed = seed(1);
 
 
@@ -102,13 +102,14 @@
 #end
 
 
-#macro plumb_splines_n(n, num_splines, zed, ang_offset)
-// Not what you think.  More like splines on an drive shaft.
+#macro plumb_splines_n(n, zed, num_splines, radratio, ang_offset)
+// Not what you think.  More like splines on a drive shaft.
+// Does not shift the plumbing at all - just adds splines around it.
 difference{
 union {
   #for (i, 0, num_splines-1)
   object {
-    Segment_of_CylinderRing(plumb_rad[n]*1.5, 0, zed, 360/num_splines/2)
+    Segment_of_CylinderRing(plumb_rad[n]*radratio, 0, zed, 360/num_splines/2)
     rotate <90, 0, 0>
     translate <-plumb_rad[n], 0, 0> rotate <rand(pseed)*2, rand(pseed)*2, 0> translate <plumb_rad[n], 0, 0>
 #if (0)
@@ -123,6 +124,34 @@ union {
   cylinder{<0, 0, -zed*1.1>, <0, 0, zed*1.1>, plumb_rad[n]*0.8}
   transform plumb_moves_accum[n]
 }
+#end
+
+// ribs in the pipe.  Increasing from the radius, like it's been inflated:
+#macro plumb_ribs_out_n(n, zed, num_ribs, bumpratio)
+#undef F
+#local  F = function {y + cos(z/zed*num_ribs*2*pi)*plumb_rad[n]*bumpratio - plumb_rad[n]*(1+bumpratio)}
+isosurface {
+  function { F(x, sqrt(y*y+x*x), z) }
+  contained_by {box {<-plumb_rad[n]*(1+bumpratio*2), -plumb_rad[n]*(1+bumpratio*2), 0>,
+                     <plumb_rad[n]*(1+bumpratio*2), plumb_rad[n]*(1+bumpratio*2), zed>}}
+  transform plumb_moves_accum[n]
+}
+#declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
+#undef F
+#end
+
+// ribs in the pipe.  Reducing the radius, like it's been gripped:
+#macro plumb_ribs_in_n(n, zed, num_ribs, bumpratio)
+#undef F
+#local  F = function {y - cos(z/zed*num_ribs*2*pi)*plumb_rad[n]*bumpratio - plumb_rad[n]*(1-bumpratio)}
+isosurface {
+  function { F(x, sqrt(y*y+x*x), z) }
+  contained_by {box {<-plumb_rad[n], -plumb_rad[n], 0>,
+                     <plumb_rad[n], plumb_rad[n], zed>}}
+  transform plumb_moves_accum[n]
+}
+#declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
+#undef F
 #end
 
 

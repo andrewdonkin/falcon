@@ -9,7 +9,7 @@
 
 
 camera { location <0, 10, -15> look_at <1.4, 0, 5> angle 20}
-camera { location <0, 10, -15> look_at <1.6, 0, 0> angle 5}
+camera { location <0, 10, -15> look_at <1.6, 0, 0> angle 8}
 
 
 global_settings {
@@ -86,8 +86,11 @@ plumb_tube_n(0, sqrt(2)/10)
 plumb_left_n (0, 45, 0) // total, 0.8
 
 plumb_tube_n(1, 0.2)
-plumb_radstep_n(1, 0.15, 0, "y")
-plumb_tube_n(1, 0.2)
+plumb_radstep_n(1, 0.15, 0.01, "y")
+plumb_splines_n(1, 0.1, 10, 1.1, 0)
+plumb_tube_n(1, 0.1)
+plumb_splines_n(1, 0.1, 10, 1.1, 9)
+plumb_tube_n(1, 0.1)
 plumb_radstep_n(1, 0.1, 0, "y")
 plumb_tube_n(1, 0.4)
 
@@ -104,12 +107,14 @@ plumb_transform_n(0, transform{translate<1.6, 0, 0>})
 plumb_transform_n(1, transform{translate<1.9, 0, 0>})
 
 plumb_tube_n(0, 0.2)
-plumb_splines_n(0, 18, -0.22, 0)
+plumb_splines_n(0, -0.22, 18, 1.5, 0)
 plumb_tube_n(0, 0.3)
-plumb_tube_n(1, 0.5)
+//plumb_tube_n(1, 0.5)
+plumb_ribs_out_n(1, 0.5, 4, 0.05)
 
 plumb_tube_n(0, 0.5)
-plumb_tube_n(1, 0.5)
+plumb_tube_n(1, 0.1)
+plumb_ribs_in_n(1, 0.4, 8, 0.03)
 
 plumb_right_n(0, 180, 1.3)
 plumb_right_n(1, 180, 1)
@@ -129,6 +134,7 @@ plumb_left_n(0, 0.5, 90)
 plumb_radstep_n(0, 0.1, 0, "n")
 plumb_tube_n(0,0.22)
 
+#if (0)  
 #undef F
 #declare  F = function {y+cos(z*2*pi)*0.02-1-0.02}
 isosurface {
@@ -146,7 +152,6 @@ isosurface {
   translate <1.9, 0, -0.9>
 }
 
-#if (0)  
 parametric{
   function{ cos(u)+0.1*sin(v*pi)} // x(u,v)
   function{ sin(u)+0.1*sin(v*pi)}   // y(u,v)
