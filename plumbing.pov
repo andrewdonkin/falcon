@@ -9,7 +9,7 @@
 
 
 camera { location <0, 10, -15> look_at <1.4, 0, 5> angle 20}
-camera { location <0, 10, -15> look_at <1.6, 0, 0> angle 8}
+camera { location <0, 10, -15> look_at <1.6, 0, 0> angle 6}
 
 
 global_settings {
@@ -104,17 +104,19 @@ plumb_left_n(1, 90, 0.15)
 
 plumb_start_n(2, 0.1)
 plumb_transform_n(0, transform{translate<1.6, 0, 0>})
-plumb_transform_n(1, transform{translate<1.9, 0, 0>})
+plumb_transform_n(1, transform{translate<1.9, 0, -0.8>})
+
+plumb_spiral_n(1, 0.8, 1, 0.1)
 
 plumb_tube_n(0, 0.2)
 plumb_splines_n(0, -0.22, 18, 1.5, 0)
 plumb_tube_n(0, 0.3)
 //plumb_tube_n(1, 0.5)
-plumb_ribs_out_n(1, 0.5, 4, 0.05)
+plumb_ribs_out_n(1, 0.5, 2, 0.3)
 
 plumb_tube_n(0, 0.5)
 plumb_tube_n(1, 0.1)
-plumb_ribs_in_n(1, 0.4, 8, 0.03)
+plumb_ribs_in_n(1, 0.4, 8, 0.06)
 
 plumb_right_n(0, 180, 1.3)
 plumb_right_n(1, 180, 1)
@@ -134,40 +136,18 @@ plumb_left_n(0, 0.5, 90)
 plumb_radstep_n(0, 0.1, 0, "n")
 plumb_tube_n(0,0.22)
 
-#if (0)  
-#undef F
-#declare  F = function {y+cos(z*2*pi)*0.02-1-0.02}
-isosurface {
-  function { F(x, sqrt(y*y+x*x), z*2) }
-  contained_by {box {<-1.5,-1.1,0>,<1.5,1.1,4>}}
-  scale 0.1
-  translate <1.9, 0, -0.4>
-}
-#undef F
-#declare  F = function {y-cos(z*2*pi)*0.02-1+0.02}
-isosurface {
-  function { F(x, sqrt(y*y+x*x), z*2) }
-  contained_by {box {<-1.1,-1.1,0>,<1.1,1.1,4>}}
-  scale 0.1
-  translate <1.9, 0, -0.9>
-}
-
+#if (0)
 parametric{
-  function{ cos(u)+0.1*sin(v*pi)} // x(u,v)
-  function{ sin(u)+0.1*sin(v*pi)}   // y(u,v)
+  function{ cos(u)+0.4*cos(v/8*2*pi)} // x(u,v)
+  function{ sin(u)+0.4*sin(v/8*2*pi)}   // y(u,v)
   function{ v }        // z(u,v)
-  <0,0>,<2*pi,4>  // start, end(u,v)
-  contained_by {box {<-1.5,-1.5,0>,<1.5,1.5,4>}}
-  max_gradient 4
-  accuracy 0.003
-  precompute 9 x,y,z
+  <0,0>, <2*pi,8>  // start, end(u,v)
+  contained_by {box {<-1.5,-1.5,0>,<1.5,1.5,8>}}
+  max_gradient 7
+  accuracy 0.005
+  precompute 10 x,y,z
   scale 0.1
-  translate <1.9, 0, -0.4>
+  translate <1.9, 0, -0.8>
 }
- #end
 
-plumb_start_n(1,0.1)
-plumb_transform_n(0, transform{translate<1.9, 0, -0.5>})
-plumb_tube_n(0, 0.1)
-
-
+#end

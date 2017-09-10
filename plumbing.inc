@@ -126,34 +126,83 @@ union {
 }
 #end
 
-// ribs in the pipe.  Increasing from the radius, like it's been inflated:
+// Ribs in the pipe.  Increasing from the radius, like it's been inflated.
+// Each rib swells out to radius + radius*bumpratio
 #macro plumb_ribs_out_n(n, zed, num_ribs, bumpratio)
-#undef F
-#local  F = function {y + cos(z/zed*num_ribs*2*pi)*plumb_rad[n]*bumpratio - plumb_rad[n]*(1+bumpratio)}
+#if (num_ribs < 1)
+# error concat("I need ribs.  n:", str(n,0,0),
+    " zed:", str(zed,0,0),
+    " num_ribs:", str(num_ribs,0,0),
+    " bumpratio:", str(bumpratio,0,0))
+#end
 isosurface {
-  function { F(x, sqrt(y*y+x*x), z) }
-  contained_by {box {<-plumb_rad[n]*(1+bumpratio*2), -plumb_rad[n]*(1+bumpratio*2), 0>,
-                     <plumb_rad[n]*(1+bumpratio*2), plumb_rad[n]*(1+bumpratio*2), zed>}}
+  function { sqrt(y*y+x*x)  // radius of the rendered pipe...
+               + cos(z/zed*num_ribs*2*pi) * plumb_rad[n] * bumpratio/2 // ...plus cosine
+               - plumb_rad[n]*(1+bumpratio/2) }  // ...equals expanded radius
+  contained_by {box {<-plumb_rad[n]*(1.1+bumpratio), -plumb_rad[n]*(1.1+bumpratio), 0>,
+                     <plumb_rad[n]*(1.1+bumpratio), plumb_rad[n]*(1.1+bumpratio), zed>}}
+  accuracy 0.005 * plumb_rad[n]
+  //max_gradient 0.06 // For bumpratio 1, 1+0.6*num_ribs-1
+  evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
   transform plumb_moves_accum[n]
 }
 #declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
-#undef F
 #end
 
-// ribs in the pipe.  Reducing the radius, like it's been gripped:
+// Ribs in the pipe.  Reducing the radius, like it's been gripped.
+// Each corrugation goes in to radius - radius*bumpratio
 #macro plumb_ribs_in_n(n, zed, num_ribs, bumpratio)
-#undef F
-#local  F = function {y - cos(z/zed*num_ribs*2*pi)*plumb_rad[n]*bumpratio - plumb_rad[n]*(1-bumpratio)}
 isosurface {
-  function { F(x, sqrt(y*y+x*x), z) }
-  contained_by {box {<-plumb_rad[n], -plumb_rad[n], 0>,
-                     <plumb_rad[n], plumb_rad[n], zed>}}
+  function { sqrt(y*y+x*x)
+             - cos(z/zed*num_ribs*2*pi)*plumb_rad[n]*bumpratio/2
+             - plumb_rad[n]*(1-bumpratio/2) }
+  // expand the container to fit inaccuracies
+  contained_by {box {<-plumb_rad[n]*1.01, -plumb_rad[n]*1.01, 0>,
+                     <plumb_rad[n]*1.01, plumb_rad[n]*1.01, zed>}}
+  evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
   transform plumb_moves_accum[n]
 }
 #declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
-#undef F
 #end
 
+#macro plumb_spiral_para_n(n, zed, num_turns, major)
+parametric{
+  function{ plumb_rad[n] * cos(u) + major * cos(v/zed*num_turns*2*pi) } // x(u,v)
+  function{ plumb_rad[n] * sin(u) + major * sin(v/zed*num_turns*2*pi) }   // y(u,v)
+  function{ v }        // z(u,v)
+  <0,0>, <2*pi, zed>  // start, end(u,v)
+  contained_by {box {<-plumb_rad[n] - major*1.2, -plumb_rad[n] - major*1.2, 0>,
+                     <plumb_rad[n] + major *1.2, plumb_rad[n] + major *1.1, zed>}}
+  max_gradient 0.00000001 ///...seems to work
+  accuracy 0.001 // * plumb_rad[n] ?
+  precompute 20 x,y,z
+  transform plumb_moves_accum[n]
+}
+#declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
+#end
+
+#macro plumb_spiral_n(n, zed, num_turns, major)
+isosurface {
+  function { 
+    f_helix1( x,y,z,
+        1,    // number of helixes, (1 = single helix, 2 = double helix etc.)
+        num_turns*2*pi,// For number N of turns per heigth of y = 1 unit, use N* 2*pi
+        plumb_rad[n], // minor radius,
+        major, // major radius,
+        1,    // shape parameter,
+        0.3,  // cross section type,
+              // (0.0 to 1.0 = square ... rounded to circle
+              // over 2.0 to 3.0 = rounded to diamond and concave diamond
+        0 )   // cross section rotation angle
+    }
+  // expand the container to fit inaccuracies
+  contained_by {box {<-plumb_rad[n]*1.01, -plumb_rad[n]*1.01, 0>,
+                     <plumb_rad[n]*1.01, plumb_rad[n]*1.01, zed>}}
+  evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
+  transform plumb_moves_accum[n]
+}
+#declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
+#end
 
 //---------
 
