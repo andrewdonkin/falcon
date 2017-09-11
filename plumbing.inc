@@ -165,43 +165,148 @@ isosurface {
 #declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
 #end
 
-#macro plumb_spiral_para_n(n, zed, num_turns, major)
-parametric{
-  function{ plumb_rad[n] * cos(u) + major * cos(v/zed*num_turns*2*pi) } // x(u,v)
-  function{ plumb_rad[n] * sin(u) + major * sin(v/zed*num_turns*2*pi) }   // y(u,v)
-  function{ v }        // z(u,v)
-  <0,0>, <2*pi, zed>  // start, end(u,v)
-  contained_by {box {<-plumb_rad[n] - major*1.2, -plumb_rad[n] - major*1.2, 0>,
-                     <plumb_rad[n] + major *1.2, plumb_rad[n] + major *1.1, zed>}}
-  max_gradient 0.00000001 ///...seems to work
-  accuracy 0.001 // * plumb_rad[n] ?
-  precompute 20 x,y,z
+//#macro plumb_spiral_para_n(n, zed, num_turns, major)
+//parametric{
+//  function{ plumb_rad[n] * cos(u) + major * cos(v/zed*num_turns*2*pi) } // x(u,v)
+//  function{ plumb_rad[n] * sin(u) + major * sin(v/zed*num_turns*2*pi) }   // y(u,v)
+//  function{ v }        // z(u,v)
+//  <0,0>, <2*pi, zed>  // start, end(u,v)
+//  contained_by {box {<-plumb_rad[n] - major*1.2, -plumb_rad[n] - major*1.2, 0>,
+//                     <plumb_rad[n] + major *1.2, plumb_rad[n] + major *1.1, zed>}}
+//  max_gradient 0.00000001 ///...seems to work
+//  accuracy 0.001 // * plumb_rad[n] ?
+//  precompute 20 x,y,z
+//  transform plumb_moves_accum[n]
+//}
+//#declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
+//#end
+//
+//#macro plumb_spiral_builtin_n(n, zed, num_turns, major)
+//isosurface {
+//  function { 
+//    f_helix1( x,y,z,
+//        1,    // number of helixes, (1 = single helix, 2 = double helix etc.)
+//        num_turns*2*pi,// For number N of turns per heigth of y = 1 unit, use N* 2*pi
+//        plumb_rad[n], // minor radius,
+//        major, // major radius,
+//        1,    // shape parameter,
+//        1,  // cross section type,
+//              // (0.0 to 1.0 = square ... rounded to circle
+//              // over 2.0 to 3.0 = rounded to diamond and concave diamond
+//        0 )   // cross section rotation angle
+//  }
+//  contained_by {box {<-major-plumb_rad[n], 0, -major-plumb_rad[n]>,
+//                       <major+plumb_rad[n], zed, major+plumb_rad[n]>}}
+//  evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
+//  rotate 90*x
+//  transform plumb_moves_accum[n]
+//}
+//#declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
+//#end
+
+// Starts at x=majorx, y=0, so you need the leadin and leadout macros
+// to get the pipe back to x=0
+#macro plumb_spiral_n(n, zed, num_turns, majorx, majory)
+#local plumbf=function (x,y,x1,y1) {
+    sqrt(pow(x-x1, 2) + pow(y-y1, 2))
+         - plumb_rad[n]
+    }
+isosurface {
+  function { plumbf(x,y,
+             cos(z/zed*num_turns*2*pi) * majorx,
+             sin(z/zed*num_turns*2*pi) * majory) }
+  contained_by {box {<-majorx-plumb_rad[n], -majory-plumb_rad[n], 0>,
+                       <majorx+plumb_rad[n], majory+plumb_rad[n], zed>}}
+  evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
+  accuracy 0.001 * plumb_rad[n] // default is fine until you stitch them together
   transform plumb_moves_accum[n]
 }
 #declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
 #end
 
-#macro plumb_spiral_n(n, zed, num_turns, major)
+// soft joiner from x=0 out to x=majorx
+#macro plumb_spiral_leadin_n(n, zed, majorx)
 isosurface {
-  function { 
-    f_helix1( x,y,z,
-        1,    // number of helixes, (1 = single helix, 2 = double helix etc.)
-        num_turns*2*pi,// For number N of turns per heigth of y = 1 unit, use N* 2*pi
-        plumb_rad[n], // minor radius,
-        major, // major radius,
-        1,    // shape parameter,
-        0.3,  // cross section type,
-              // (0.0 to 1.0 = square ... rounded to circle
-              // over 2.0 to 3.0 = rounded to diamond and concave diamond
-        0 )   // cross section rotation angle
-    }
-  // expand the container to fit inaccuracies
-  contained_by {box {<-plumb_rad[n]*1.01, -plumb_rad[n]*1.01, 0>,
-                     <plumb_rad[n]*1.01, plumb_rad[n]*1.01, zed>}}
+  function { sqrt(pow(x - (- cos(z/zed*pi) * majorx/2 + majorx/2), 2) + y*y)
+             - plumb_rad[n]}
+  contained_by {box {<-plumb_rad[n], -plumb_rad[n], 0>,
+                       <majorx+plumb_rad[n], plumb_rad[n], zed>}}
   evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
+  accuracy 0.001 * plumb_rad[n]
+  transform plumb_moves_accum[n]
+}
+// soft joiner from x=majorx back to x=0
+#declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
+#end
+#macro plumb_spiral_leadout_n(n, zed, majorx)
+isosurface {
+  function { sqrt(pow(x - (  cos(z/zed*pi) * majorx/2 + majorx/2), 2) + y*y)
+             - plumb_rad[n]}
+  contained_by {box {<-plumb_rad[n], -plumb_rad[n], 0>,
+                       <majorx+plumb_rad[n], plumb_rad[n], zed>}}
+  evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
+  accuracy 0.001 * plumb_rad[n]
   transform plumb_moves_accum[n]
 }
 #declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
+#end
+
+//####################################################################
+// Returns [0,1] for input [0,1].  Returns 0.5 for input 0.5.
+// But it is an S-shape in between.
+// I use it in the spirals to avoid sudden gradient changes at the ends.
+#declare softly = function(in) {
+  select(in-0.5,
+    0.5*(1-cosd(90*in))/(1-sind(45)),                            // in < 0.5
+    0.5+0.5*(sind(90*(min(in,1))) - sind(45)) / (1-sind(45))      // in >= 0.5
+  )
+}
+// Another spiral, that starts with radius zero, so you don't need to ease into it.
+// If the final parameter "mirrorz" is true, starts at full radius and dimishes to zero.
+// Use snowcone and snowcone_out instead of this.
+// Keep the pitch the same through all three macros:  snowcone, spiral, and snowcone_out.
+// Easiest way to do that is with a wire_handle.
+#macro plumb_wirehandle_n(n, zed, in_turns, const_turns, out_turns, majorx, majory)
+#local num_turns = in_turns + const_turns + out_turns;
+#if (in_turns)
+  plumb_snowcone_n(n, zed * in_turns / num_turns, in_turns, majorx, majory)
+#else
+  #warning "wire handles are disconnected without an opening snowcone.  Hope that makes sense."
+#end
+#if (const_turns)
+  plumb_spiral_n(n, zed * const_turns / num_turns, const_turns, majorx, majory)
+#end
+#if (out_turns)
+  plumb_snowcone_out_n(n, zed * out_turns / num_turns, out_turns, majorx, majory)
+#else
+  #warning "wire handles are disconnected without a closing snowcone."
+#end
+#end
+
+
+#macro plumb_snowcone_n_int(n, zed, num_turns, majorx, majory, mirrorz)
+#local plumbf=function (x,y,x1,y1) {
+    sqrt(pow(x-x1, 2) + pow(y-y1, 2))
+         - plumb_rad[n]}
+isosurface {
+  function { plumbf(x,y,
+             cos(z/zed*num_turns*2*pi) * majorx * softly(
+             #if (mirrorz) 1- #end z/zed),
+             sin(z/zed*num_turns*2*pi) * majory * softly(
+             #if (mirrorz) 1- #end z/zed)) }
+  contained_by {box {<-majorx-plumb_rad[n], -majory-plumb_rad[n], 0>,
+                       <majorx+plumb_rad[n], majory+plumb_rad[n], zed>}}
+  evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
+  accuracy 0.001 * plumb_rad[n] // default is fine until you stitch them together
+  transform plumb_moves_accum[n]
+}
+#declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
+#end
+#macro plumb_snowcone_n(n, zed, num_turns, majorx, majory)
+  plumb_snowcone_n_int(n, zed, num_turns, majorx, majory, 0)
+#end
+#macro plumb_snowcone_out_n(n, zed, num_turns, majorx, majory)
+  plumb_snowcone_n_int(n, zed, num_turns, majorx, majory, 1)
 #end
 
 //---------

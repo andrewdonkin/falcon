@@ -36,7 +36,9 @@ plumb_tube(2)
 
 plumb_left(20, 0.9)
 
-plumb_tube(3)
+plumb_tube(0.5)
+plumb_spiral_n(0, 0.8, 1, 0, 0.1)
+plumb_tube(1.7)
 
 plumb_right(20, 3)
 plumb_twist(20)                     
@@ -70,8 +72,8 @@ sphere {0, 0.1 transform plumb_transform()
 //-----------------------------
 
 plumb_start_n(2, 0.1)
-plumb_transform_n(0, transform{translate<1, 0, 0>})
-plumb_transform_n(1, transform{translate<1.3, 0, 0>})
+plumb_transform_n(0, transform{translate<0.7, 0, 0>})
+plumb_transform_n(1, transform{translate<1.0, 0, 0>})
 
 plumb_tube_n(0, 0.5)
 plumb_tube_n(1, 0.5)
@@ -103,10 +105,12 @@ plumb_left_n(1, 90, 0.15)
 //-----------------------------
 
 plumb_start_n(2, 0.1)
-plumb_transform_n(0, transform{translate<1.6, 0, 0>})
-plumb_transform_n(1, transform{translate<1.9, 0, -0.8>})
+plumb_transform_n(0, transform{translate<1.3, 0, 0>})
+plumb_transform_n(1, transform{translate<1.6, 0, -1>})
 
-plumb_spiral_n(1, 0.8, 1, 0.1)
+plumb_spiral_leadin_n(1, 0.2, 0.1)
+plumb_spiral_n(1, 0.6, 1, 0.1, 0.0)
+plumb_spiral_leadout_n(1, 0.2, 0.1)
 
 plumb_tube_n(0, 0.2)
 plumb_splines_n(0, -0.22, 18, 1.5, 0)
@@ -135,6 +139,19 @@ plumb_left_n(0, 0.5, 90)
 
 plumb_radstep_n(0, 0.1, 0, "n")
 plumb_tube_n(0,0.22)
+
+
+plumb_start_n(1, 0.04)
+plumb_transform_n(0, transform{translate<2, -0.5, 0>})
+plumb_tube_n(0,0.2)
+plumb_snowcone_n(0, 0.7, 2, 0.1, 0.04)
+plumb_spiral_n(0, 0.35, 1, 0.1, 0.04)
+plumb_snowcone_out_n(0, 0.7, 2, 0.1, 0.04)
+
+plumb_start_n(1, 0.04)
+plumb_transform_n(0, transform{translate<2.2, -0.5, 0>})
+plumb_tube_n(0,0.2)
+plumb_wirehandle_n(0, 1, 1, 1, 3, 0.1, 0.1)
 
 #if (0)
 parametric{
