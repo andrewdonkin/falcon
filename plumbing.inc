@@ -225,7 +225,7 @@ isosurface {
 #end
 
 // soft joiner from x=0 out to x=majorx
-#macro plumb_spiral_leadin_n(n, zed, majorx)
+#macro plumb_spiral_start_n(n, zed, majorx)
 isosurface {
   function { sqrt(pow(x - (- cos(z/zed*pi) * majorx/2 + majorx/2), 2) + y*y)
              - plumb_rad[n]}
@@ -235,10 +235,13 @@ isosurface {
   accuracy 0.001 * plumb_rad[n]
   transform plumb_moves_accum[n]
 }
-// soft joiner from x=majorx back to x=0
 #declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
 #end
-#macro plumb_spiral_leadout_n(n, zed, majorx)
+
+// soft joiner from x=majorx back to x=0.  This one only moves in the X plane
+// and does not twist + or - y, so it does not lead well into actual spirals.
+// Fooled you with the name.  Snowcones are better.
+#macro plumb_spiral_finish_n(n, zed, majorx)
 isosurface {
   function { sqrt(pow(x - (  cos(z/zed*pi) * majorx/2 + majorx/2), 2) + y*y)
              - plumb_rad[n]}
@@ -269,7 +272,7 @@ isosurface {
 #macro plumb_wirehandle_n(n, zed, in_turns, const_turns, out_turns, majorx, majory)
 #local num_turns = in_turns + const_turns + out_turns;
 #if (in_turns)
-  plumb_snowcone_n(n, zed * in_turns / num_turns, in_turns, majorx, majory)
+  plumb_snowcone_start_n(n, zed * in_turns / num_turns, in_turns, majorx, majory)
 #else
   #warning "wire handles are disconnected without an opening snowcone.  Hope that makes sense."
 #end
@@ -277,14 +280,22 @@ isosurface {
   plumb_spiral_n(n, zed * const_turns / num_turns, const_turns, majorx, majory)
 #end
 #if (out_turns)
-  plumb_snowcone_out_n(n, zed * out_turns / num_turns, out_turns, majorx, majory)
+  plumb_snowcone_finish_n(n, zed * out_turns / num_turns, out_turns, majorx, majory)
 #else
   #warning "wire handles are disconnected without a closing snowcone."
 #end
 #end
 
+// Spiral out from the centre to x=major
+#macro plumb_snowcone_start_n(n, zed, num_turns, majorx, majory)
+  _plumb_snowcone_n(n, zed, num_turns, majorx, majory, 0)
+#end
+// Spiral in from x=major to the centre
+#macro plumb_snowcone_finish_n(n, zed, num_turns, majorx, majory)
+  _plumb_snowcone_n(n, zed, num_turns, majorx, majory, 1)
+#end
 
-#macro plumb_snowcone_n_int(n, zed, num_turns, majorx, majory, mirrorz)
+#macro _plumb_snowcone_n(n, zed, num_turns, majorx, majory, mirrorz)
 #local plumbf=function (x,y,x1,y1) {
     sqrt(pow(x-x1, 2) + pow(y-y1, 2))
          - plumb_rad[n]}
@@ -302,11 +313,43 @@ isosurface {
 }
 #declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
 #end
-#macro plumb_snowcone_n(n, zed, num_turns, majorx, majory)
-  plumb_snowcone_n_int(n, zed, num_turns, majorx, majory, 0)
-#end
-#macro plumb_snowcone_out_n(n, zed, num_turns, majorx, majory)
-  plumb_snowcone_n_int(n, zed, num_turns, majorx, majory, 1)
+
+//---------
+
+#macro plumb_ssweep_n(n, zed, num_turns, majorx, majory)
+#local r = plumb_rad[n];
+#local divs=26;
+#local gentle = 0.1;
+sphere_sweep {
+    cubic_spline
+    num_turns * divs + 4, // start and end points plus control points
+  <0, 0, -r>, r  // first control point, doesn't matter, someone on -Z
+  <0, 0, 0>, r 
+  
+    #local h=0;  #while (h < num_turns * divs)
+    #local i = h / divs;
+      #switch (i / num_turns)
+        #range (0, gentle)
+          #local rratio = softly(i / num_turns / gentle);
+          #break;
+        #range (1-gentle, 1)
+          #local rratio = softly((1 - (i / num_turns )) / gentle);
+          #break;
+        #else
+          #local rratio = 1;
+      #end
+      <majorx * cos(i*2*pi) * rratio,
+       majory * sin(i*2*pi) * rratio,
+       i * zed / num_turns>, r
+      #local h=h+1;
+    #end
+    
+  <0, 0, zed>, r
+  <0, 0, zed + r>, r // last control point
+    transform plumb_moves_accum[n]
+}
+    
+#declare plumb_moves_accum[n] = transform { translate zed*z plumb_moves_accum[n]}
 #end
 
 //---------
