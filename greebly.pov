@@ -1,4 +1,4 @@
-#include "shapes3.inc"
+#include "shapes3.inc" // f_rounded_box()
 
 global_settings {
  //  ambient_light 0
@@ -41,66 +41,82 @@ union {
 }
 
 // one way of merging a block into the plane
-#local R=0.1;
-isosurface  {
-  function {
-    (1+0.01)
-     - pow(0.01, f_rounded_box(x,y,z, 0.1, 1, 1, 1)
-     - pow(0.00001, (y+0.2))
-     )
+#macro skirted_box2(Box
+                    , Rbox  //
+                    , skirting // (0, 1].  1 is good.  Smaller=tighter
+                    )
+  #local Boxx=Box.x; // functions don't like vectors.
+  #local Boxy=Box.y;
+  #local Boxz=Box.z;
+  isosurface  {
+    function {
+      (1+0.001)
+       - pow(0.0001, f_rounded_box(x-Boxx/2,y,z-Boxz/2, Rbox, Boxx/2, Boxy/2, Boxz/2)
+       //-f_superellipsoid(x*2-Boxx, y*2, z*2-Boxz,0.08, 0.08)
+       )
+       - pow(0.00001 * skirting, (y+Boxy/20))
+    }
+    contained_by {box {<-Boxy/3, 0, -Boxy/3>,
+                       <Boxx+Boxy/3, Boxy/2, Boxz+Boxy/3>}}
+    evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
+    accuracy 0.001*Rbox // default is fine until you stitch them together
   }
-  //function { -f_superellipsoid(x,y,z,0.08, 0.08) }
-  contained_by {box {<-2, 0, -2>,
-                     <2, 1, 2>}}
-  evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
-  accuracy 0.001*R // default is fine until you stitch them together
-  scale 0.5
-    translate <-0.25, 0, 0.5>
+#end
+
+object {
+  skirted_box2(<1, 1, 1>, 0.03, 1)
+  translate <0.25, 0, 0>
   texture { pigment { checker color rgb 0.2, colour rgb <1,1,1> }}
 }
 
 // another way: smooth transient between the plane and the box skirting
-#local R=0.1;
-union {
-  isosurface  {
-    function {f_rounded_box(x,y,z, 0.1, 1, 1, 1)}
-    contained_by {box {<-1, 0, -1>,
-                       <1, 1, 1>}}
-    evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
-  }
-  difference {
-    merge {
-      // these four cylinders lying at the base of the box
-      // will get another cylinder subtracted later
-      // to form a radiused skirting.
-      cylinder {<-1+R, 0, -1>, <1-R, 0, -1>, 0.1} // near
-      cylinder {<-1, 0, -1+R>, <-1, 0, 1-R>, 0.1} //left 
-      cylinder {<-1+R, 0, 1>, <1-R, 0, 1>, 0.1} // rear
-      cylinder {<1, 0, -1+R>, <1, 0, 1-R>, 0.1} // right
-      
-      // these four hockey pucks will have quarter of a torus taken out of them
-      cylinder {<-1+R, 0, -1+R>, <-1+R, R, -1+R>, R*2} // near left
-      cylinder {<1-R,  0, -1+R>, <1-R,  R, -1+R>, R*2} // near right
-      cylinder {<-1+R, 0,  1-R>, <-1+R, R,  1-R>, R*2} // far left
-      cylinder {<1-R,  0,  1-R>, <1-R,  R,  1-R>, R*2} // far right
+#macro skirted_box(Box                 // 3-vector of box dimensions
+                   , Rbox          // radius of box's edges
+                   , R)           // radius of skirting
+  #local Boxx=Box.x; // functions don't like vectors.
+  #local Boxy=Box.y;
+  #local Boxz=Box.z;
+  union {
+    isosurface  {
+      function {f_rounded_box(x-Boxx/2,y,z-Boxz/2, Rbox, Boxx/2, Boxy/2, Boxz/2)}
+      contained_by {box {<0, 0, 0>,
+                         <Boxx, Boxy/2, Boxz>}}
+      evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
+      accuracy 0.000001
     }
-    cylinder {<-1, R, -1-R>, <1, R, -1-R>, R} // near
-    cylinder {<-1-R, R, -1>, <-1-R, R, 1>, R} // left
-    cylinder {<-1, R, 1+R>, <1, R, 1+R>, R} // rear
-    cylinder {<1+R, R, -1>, <1+R, R, 1+R>, R} //right
-    object {Segment_of_Torus(R*2, R, 90) rotate 90*y translate <-1+R, R, -1+R> } // near left
-    object {Segment_of_Torus(R*2, R, 90) translate <1-R, R, -1+R> } // near right
-    object {Segment_of_Torus(R*2, R, 90) rotate 180*y translate <-1+R, R, 1-R> } // far left
-    object {Segment_of_Torus(R*2, R, -90) translate <1-R, R, 1-R> } // far right
-
+    difference {
+      merge {
+        // these four cylinders lying at the base of the box
+        // will get another cylinder subtracted later
+        // to form a radiused skirting.
+        cylinder {<Rbox, 0, 0>, <Boxx-Rbox, 0, 0>, R} // near
+        cylinder {<0, 0, Rbox>, <0, 0, Boxz-Rbox>, R} //left 
+        cylinder {<Rbox, 0, Boxz>, <Boxx-Rbox, 0, Boxz>, R} // rear
+        cylinder {<Boxx, 0, Rbox>, <Boxx, 0, Boxz-Rbox>, R} // right
+        
+        // these four hockey pucks will have quarter of a torus taken out of them
+        cylinder {<+Rbox, 0, Rbox>, <Rbox, R, Rbox>, R+Rbox} // near left
+        cylinder {<Boxx-Rbox,  0, Rbox>, <Boxx-Rbox,  R, Rbox>, R+Rbox} // near right
+        cylinder {<+Rbox, 0,  Boxz-Rbox>, <+Rbox, R,  Boxz-Rbox>, R+Rbox} // far left
+        cylinder {<Boxx-Rbox,  0,  Boxz-Rbox>, <Boxx-Rbox,  R,  Boxz-Rbox>, R+Rbox} // far right
+      }
+      cylinder {<0, R, -R>, <Boxx, R, -R>, R} // near
+      cylinder {<-R, R, -Boxz>, <-R, R, Boxz>, R} // left
+      cylinder {<0, R, Boxz+R>, <Boxx, R, Boxz+R>, R} // rear
+      cylinder {<Boxx+R, R, -Boxz>, <Boxx+R, R, Boxz+R>, R} //right
+      object {Segment_of_Torus(R+Rbox, R, 90) rotate 90*y translate <Rbox, R, Rbox> } // near left
+      object {Segment_of_Torus(R+Rbox, R, 90) translate <Boxx-Rbox, R, Rbox> } // near right
+      object {Segment_of_Torus(R+Rbox, R, 90) rotate 180*y translate <Rbox, R, Boxz-Rbox> } // far left
+      object {Segment_of_Torus(R+Rbox, R, -90) translate <Boxx-Rbox, R, Boxz-Rbox> } // far right
+    }
   }
-  
-  
-  scale 0.5
-  rotate 180*y
-  translate <1.25, 0, 0.5>
+#end
+
+object {
+  skirted_box(<1, 1, 1>, 0.03, 0.02)
+  translate <1.5, 0, 0>
   texture { pigment { checker color rgb 0.2, colour rgb <1,1,1> }}
-}
+  }
 
 
 #if (0)
@@ -125,5 +141,5 @@ light_source { <2, 1.5, -2> rgb 1
 #end
 
 camera { location <0, 3, -3> look_at <1, 0, 0> angle 40}
-camera { location <4, 3, -1> look_at <1.5, 0, 1> angle 30}
+//camera { location <4, 3, -1> look_at <1.5, 0, 1> angle 30}
 //camera { location <0, 3, -1> look_at <1, 0, 1> angle 30}
