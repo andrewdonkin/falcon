@@ -4,6 +4,10 @@
 // homepage: http://www.f-lohmueller.de/
 
 // I hacked this about to suit my particular needs.  It is not improved.
+// The radius is removed from the bottom of the object:  it sits on a plane.
+// The macros are redone in a way that more sense to me, and with fewer objects.
+// I have not tested with transparent objects so there could be coincident surfaces.
+// The parameter checking is all Friedrich's.
 
 //---------------------------------------------------------------------------------------
 //#ifndef(  Shapes_Inc_Temp)
@@ -31,12 +35,14 @@
 #end 
 
 #if ( abs(Border_Radius_Big) < abs(Border_Radius_Small)) 
- #warning "\nRound_Box_Y()macro  \n called Border_Radius_Big < Border_Radius_Small,\nradi interchanged\n"
+ #warning "\nskirted_box_y() macro  \n called Border_Radius_Big < Border_Radius_Small,\nradi interchanged\n"
 #local Rmaj = abs(Border_Radius_Small); 
 #local Rmin = abs(Border_Radius_Big); 
 #end 
 
-#if ((Y_Filled___On = 0) & ( Rmaj < 2*Rmin)) // for non filled version
+// If not filled, the thickness of the wall has to be <= radius of the corner.
+#if ((Y_Filled___On = 0) & ( Rmaj < 2*Rmin))
+ #warning "\nskirted_box_y() macro  \n called minor radius too large for hollow\nradi reduced\n"
  #local  Rmin = Rmaj/2 - D; 
 #end  
 
@@ -46,15 +52,15 @@
 
 // --------------------------------------------------------------
 #if ( 2*Rmaj >  (R_Point_2_In.x-R_Point_1_In.x) ) 
-#warning "\nRound_Box_Y() macro called with bad x-size:  width in x < 2*Radius_big. Results may not be as expected\n"
+#warning "\nskirted_box_y() macro called with bad x-size:  width in x < 2*Radius_big. Results may not be as expected\n"
 #end 
 
-#if ( (2*Rmin) >  (R_Point_2_In.y-R_Point_1_In.y) )     
-#warning "\nRound_Box_Y() macro called with bad y-size:  width in y < 2*Radius_big. Results may not be as expected\n"
+#if ( Rmin >  (R_Point_2_In.y-R_Point_1_In.y) )     
+#warning "\nskirted_box_y() macro called with bad y-size:  width in y < 2*Radius_big. Results may not be as expected\n"
 #end 
 
 #if ( 2*Rmaj >  (R_Point_2_In.z-R_Point_1_In.z) ) 
-#warning "\nRound_Box_Y() macro called with bad z-size:  width in z < 2*Radius_small. Results may not be as expected\n"
+#warning "\nskirted_box_y() macro called with bad z-size:  width in z < 2*Radius_small. Results may not be as expected\n"
 #end 
 // --------------------------------------------------------------
 // right order of the coordinates:
@@ -77,6 +83,19 @@ intersection {
 #end
 
 //---------------------------------------------------------
+// merge/union of 
+// - four large corner cylinders (large means going to the X and Z extremities)
+// - two large boxes
+// if filled in
+// - two smaller boxes going to the extreme Y this time
+// - four smaller corner cylinders going to extreme Y
+// if hollow, subtract
+// - four smaller tall cylinders
+// - two boxes even smaller that those used in the fill-in.
+// whether hollow or filled, add
+// - four cylinders running along the top edges
+// - four quarter-tori at each top corner
+
 #if (Merge___On = 1)  // 1
  merge{   // outer union/merge
 #else 
@@ -133,7 +152,7 @@ cylinder{ <P2.x-Rmaj, P1.y       , P2.z-Rmaj>,
 } // end our differences
 #end //hollow
  
-union{ // horizontal small border cylinders
+// horizontal small border cylinders on top
 cylinder{ <P1.x+Rmin,P2.y-Rmin,P1.z+Rmaj-D>,<P1.x+Rmin,P2.y-Rmin,P2.z-Rmaj+D>, Rmin} 
 cylinder{ <P2.x-Rmin,P2.y-Rmin,P1.z+Rmaj-D>,<P2.x-Rmin,P2.y-Rmin,P2.z-Rmaj+D>, Rmin} 
 
@@ -141,13 +160,124 @@ cylinder{ <P1.x+Rmaj-D,P2.y-Rmin,P1.z+Rmin>,<P2.x-Rmaj+D,P2.y-Rmin,P1.z+Rmin>, R
 cylinder{ <P1.x+Rmaj-D,P2.y-Rmin,P2.z-Rmin>,<P2.x-Rmaj+D,P2.y-Rmin,P2.z-Rmin>, Rmin} 
  // pigment {color rgb<1,0.7,0>} 
 
-}
-
 // edges curved
 object{ Quarter_1  rotate<0, 0*90,0> translate<P1.x,P2.y-Rmin,P1.z> }
 object{ Quarter_1  rotate<0,-1*90,0> translate<P2.x,P2.y-Rmin,P1.z> }
 object{ Quarter_1  rotate<0,-2*90,0> translate<P2.x,P2.y-Rmin,P2.z> }
 object{ Quarter_1  rotate<0,-3*90,0> translate<P1.x,P2.y-Rmin,P2.z> }
+
+}// end of outer union/merge
+#end// of macro ------------------------------------------------------// end of macro
+
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+
+#macro skirted_lozenge_y (P1,         // box bottom left
+                      Z, Y,          // length and height
+                      End_Radius,    // radius around ends
+                      Top_Radius,  // radius around top
+                      Y_Filled___On, // 
+                      Merge___On
+                   ) //------------------------
+//---------------------------------------------
+#local D = 0.0000001;  // a very little bit to avoid coincident surfaces!!!
+
+//---------------------------------------------
+
+#if ( abs(End_Radius) >= abs(Top_Radius))
+# local Rmaj = abs(End_Radius); 
+# local Rmin = abs(Top_Radius); 
+#else
+# warning "\nskirted_lozenge_y() macro \n called End_Radius < Top_Radius,\nradi interchanged\n"
+# local Rmaj = abs(Top_Radius); 
+# local Rmin = abs(End_Radius); 
+#end 
+
+#if (Rmin   = 0)
+ #local Rmin = 2*D;
+#end
+
+// --------------------------------------------------------------
+#if ( 2*Rmaj > Z ) 
+#error "\nskirted_lozenge_y() macro called with bad z-size:  < 2*End_Radius.\n"
+#end 
+
+#if ( (Rmin) >  Y )     
+#error "\nskirted_lozenge_y() macro called with bad y-size:  < 2*Top_Radius.\n"
+#end 
+
+//---------------------------------------------------------
+// merge/union of 
+// - two large corner cylinders (large means going to the X extremities)
+// - one large (but short) box
+// if filled in
+// - one smaller box going to the full height this time
+// - two smaller corner cylinders going the full height
+// if hollow, subtract
+// - two even smaller tall cylinders
+// - a box even smaller that that used in the fill-in.
+// whether hollow or filled, add
+// - two cylinders running along the top edges, +/- x
+// - two half-tori at each end of the top
+
+#if (Merge___On = 1)  // 1
+ merge{   // outer union/merge
+#else 
+ union{ 
+#end 
+
+#if (Y_Filled___On = 0)
+difference {
+ union {
+#end
+
+ cylinder{ <Rmaj, 0, Rmaj>, <Rmaj, Y-Rmin, Rmaj>, Rmaj}
+ cylinder{ <Rmaj, 0, Z-Rmaj>, <Rmaj, Y-Rmin, Z-Rmaj>, Rmaj}
+
+ box{ <0, 0 , Rmaj>, <Rmaj*2, Y-Rmin, Z-Rmaj>} // coincident
+
+
+#if (Y_Filled___On = 1)
+
+ box{ <Rmin, 0, Rmaj>, <Rmaj * 2 - Rmin, Y, Z - Rmaj>}
+
+ cylinder{ <Rmaj, 0, Rmaj>, <Rmaj, Y, Rmaj>, Rmaj-Rmin}
+ cylinder{ <Rmaj, 0, Z-Rmaj>, <Rmaj, Y, Z-Rmaj>, Rmaj-Rmin}
+
+#else // hollow
+
+ } // the end of the union
+
+ // subtract two small cylinders
+ cylinder{ <Rmaj, -D, Rmaj>, <Rmaj, Y, Rmaj>, Rmaj-Rmin*2}
+ cylinder{ <Rmaj, -D, Z-Rmaj>, <Rmaj, Y, Z-Rmaj>, Rmaj-Rmin*2}
+
+ // subtract the rest of the interior
+ box{ <Rmin*2, -D, Rmaj>, <Rmaj * 2 - Rmin * 2, Y, Z - Rmaj>}
+
+} // end our differences
+#end //hollow
+ 
+// horizontal small border cylinders on top
+cylinder{ <Rmin,          Y-Rmin, Rmaj>, <Rmin,          Y-Rmin, Z-Rmaj>, Rmin }
+cylinder{ <Rmaj*2 - Rmin, Y-Rmin, Rmaj>, <Rmaj*2 - Rmin, Y-Rmin, Z-Rmaj>, Rmin }
+
+// end caps
+#local End1 = torus { Rmaj-Rmin, Rmin };
+#if (Y_Filled___On = 1)
+# local End2 = End1;
+#else // hollow
+# local End1 = intersection { object {End1} plane { z, 0 } }
+# local End2 = object { End1 rotate 180*y };
+#end // hollow
+
+object{ End1 translate<Rmaj,Y-Rmin,Rmaj> }
+object{ End2 translate<Rmaj,Y-Rmin,Z-Rmaj> }
+
+translate P1
 
 }// end of outer union/merge
 #end// of macro ------------------------------------------------------// end of macro
