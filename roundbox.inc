@@ -21,6 +21,7 @@
 #macro skirted_box_y (  R_Point_1_In, R_Point_2_In,         // box outline
                       Border_Radius_Big,    // radius around vertical edges 
                       Border_Radius_Small,  // radius around horizontal edges
+                      Rskirt,               // radius of skirt
                       Y_Filled___On, // 
                       Merge___On
                    ) //------------------------
@@ -166,6 +167,50 @@ object{ Quarter_1  rotate<0,-1*90,0> translate<P2.x,P2.y-Rmin,P1.z> }
 object{ Quarter_1  rotate<0,-2*90,0> translate<P2.x,P2.y-Rmin,P2.z> }
 object{ Quarter_1  rotate<0,-3*90,0> translate<P1.x,P2.y-Rmin,P2.z> }
 
+
+// Now the skirt
+
+#local Quarter_2 = 
+intersection {
+  torus { Rmaj, Rskirt }
+  box { <-Rmaj-Rskirt-D, 0, -Rmaj-Rskirt-D>, <0, Rskirt+Rskirt+D, 0> }
+}
+#local Quarter_3 = 
+intersection {
+  torus { Rmaj+Rskirt, Rskirt }
+  box { <-Rmaj-Rskirt*2, -Rskirt-D, -Rmaj-Rskirt*2>, <0, Rskirt+D, 0> }
+}
+
+difference {
+  merge {
+    // these four cylinders lying at the base of the box
+    // will get another cylinder subtracted later
+    // to form a radiused skirting.
+    cylinder {<P1.x+Rmaj, P1.y, P1.z>, <P2.x-Rmaj, P1.y, P1.z>, Rskirt} // near
+    cylinder {<P1.x, P1.y, P1.z+Rmaj>, <P1.x, P1.y, P2.z-Rmaj>, Rskirt} // left
+    cylinder {<P1.x+Rmaj, P1.y, P2.z>, <P2.x-Rmaj, P1.y, P2.z>, Rskirt} // rear
+    cylinder {<P2.x, P1.y, P1.z+Rmaj>, <P2.x, P1.y, P2.z-Rmaj>, Rskirt} // right
+    
+    // these four quarter-tori will have another quarter torus taken out of them
+    object {Quarter_2 rotate   0*y translate <P1.x+Rmaj, P1.y, P1.z+Rmaj> } // near left
+    object {Quarter_2 rotate -90*y translate <P2.x-Rmaj, P1.y, P1.z+Rmaj> } // near right
+    object {Quarter_2 rotate  90*y translate <P1.x+Rmaj, P1.y, P2.z-Rmaj> } // far left
+    object {Quarter_2 rotate 180*y translate <P2.x-Rmaj, P1.y, P2.z-Rmaj> } // far right
+  }
+  cylinder {<P1.x+Rmaj-D, P1.y+Rskirt, P1.z-Rskirt>, <P2.x-Rmaj+D, P1.y+Rskirt, P1.z-Rskirt>, Rskirt} // near
+  cylinder {<P1.x-Rskirt, P1.y+Rskirt, P1.z+Rmaj-D>, <P1.x-Rskirt, P1.y+Rskirt, P2.z-Rmaj+D>, Rskirt} // left
+  cylinder {<P1.x+Rmaj-D, P1.y+Rskirt, P2.z+Rskirt>, <P2.x-Rmaj+D, P1.y+Rskirt, P2.z+Rskirt>, Rskirt} // far
+  cylinder {<P2.x+Rskirt, P1.y+Rskirt, P1.z+Rmaj-D>, <P2.x+Rskirt, P1.y+Rskirt, P2.z-Rmaj+D>, Rskirt} // right
+  object {Quarter_3 rotate 0*y translate <P1.x+Rmaj, P1.y+Rskirt, P1.z+Rmaj> } // near left
+  object {Quarter_3 rotate -90*y translate <P2.x-Rmaj, P1.y+Rskirt, P1.z+Rmaj> } // near right
+  object {Quarter_3 rotate 90*y translate <P1.x+Rmaj, P1.y+Rskirt, P2.z-Rmaj> } // far left
+  object {Quarter_3 rotate 180*y translate <P2.x-Rmaj, P1.y+Rskirt, P2.z-Rmaj> } // far right
+  plane {y, P1.y}
+}
+
+
+
+
 }// end of outer union/merge
 #end// of macro ------------------------------------------------------// end of macro
 
@@ -179,6 +224,7 @@ object{ Quarter_1  rotate<0,-3*90,0> translate<P1.x,P2.y-Rmin,P2.z> }
                       Z, Y,          // length and height
                       End_Radius,    // radius around ends
                       Top_Radius,  // radius around top
+                      Rskirt,  // radius of skirt
                       Y_Filled___On, // 
                       Merge___On
                    ) //------------------------
@@ -234,6 +280,30 @@ difference {
  union {
 #end
 
+ // First the skirt.
+ // It leaves two bits of tori inside that we will scoop out later if hollow
+ 
+ difference {
+   merge {
+     // these two cylinders lying at the base of the box
+     // will get another cylinder subtracted later
+     // to form a radiused skirting.
+     cylinder {<0,      0, Rmaj>, <0,      0, Z-Rmaj>, Rskirt} // left
+     cylinder {<2*Rmaj, 0, Rmaj>, <2*Rmaj, 0, Z-Rmaj>, Rskirt} // right
+     
+     // these two half-tori will have another taken out of them
+     object {torus { Rmaj, Rskirt } rotate   0*y translate <Rmaj, 0, Rmaj> } // near
+     object {torus { Rmaj, Rskirt } rotate 180*y translate <Rmaj, 0, Z-Rmaj> } // near
+   }
+   cylinder {<-Rskirt, Rskirt, Rmaj>, <-Rskirt, Rskirt, Z-Rmaj>, Rskirt} // left
+   cylinder {<2*Rmaj-Rskirt, Rskirt, Rmaj>, <2*Rmaj+Rskirt, Rskirt, Z-Rmaj>, Rskirt} // left
+   object {torus { Rmaj+Rskirt, Rskirt } rotate 0*y translate <Rmaj, Rskirt, Rmaj> } // near
+   object {torus { Rmaj+Rskirt, Rskirt } rotate 180*y translate <Rmaj, Rskirt, Z-Rmaj> } // near
+   plane {y, 0}
+ }
+
+
+ // Two largest cylinders, short
  cylinder{ <Rmaj, 0, Rmaj>, <Rmaj, Y-Rmin, Rmaj>, Rmaj}
  cylinder{ <Rmaj, 0, Z-Rmaj>, <Rmaj, Y-Rmin, Z-Rmaj>, Rmaj}
 
