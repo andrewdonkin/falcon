@@ -9,21 +9,14 @@
 // I have not tested with transparent objects so there could be coincident surfaces.
 // The parameter checking is all Friedrich's.
 
-//---------------------------------------------------------------------------------------
-//#ifndef(  Shapes_Inc_Temp)
-//#include "shapes.inc"                                             
-//#end 
-//#ifndef(  Shapes3_Inc_Temp)
-//#include "shapes3.inc"                                             
-//#end
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
+// This file needs a lot of work.  Capitalise, rename vars, indent.
+
+// ############################################################################
 #macro skirted_box_y (  R_Point_1_In, R_Point_2_In,         // box outline
                       Border_Radius_Big,    // radius around vertical edges 
                       Border_Radius_Small,  // radius around horizontal edges
                       Rskirt,               // radius of skirt
-                      Y_Filled___On, // 
-                      Merge___On
+                      Y_Filled___On // 
                    ) //------------------------
 //---------------------------------------------
 #local D = 0.0000001;  // a very little bit to avoid coincident surfaces!!!
@@ -97,11 +90,7 @@ intersection {
 // - four cylinders running along the top edges
 // - four quarter-tori at each top corner
 
-#if (Merge___On = 1)  // 1
- merge{   // outer union/merge
-#else 
  union{ 
-#end 
 
 #if (Y_Filled___On = 0)
 difference {
@@ -208,9 +197,6 @@ difference {
   plane {y, P1.y}
 }
 
-
-
-
 }// end of outer union/merge
 #end// of macro ------------------------------------------------------// end of macro
 
@@ -219,14 +205,15 @@ difference {
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
+// This macro extends to the -x and -z of P1, by Rskirt.  Check the bounded_by
 
+// ############################################################################
 #macro skirted_lozenge_y (P1,         // box bottom left
                       Z, Y,          // length and height
                       End_Radius,    // radius around ends
                       Top_Radius,  // radius around top
                       Rskirt,  // radius of skirt
-                      Y_Filled___On, // 
-                      Merge___On
+                      Y_Filled___On // 
                    ) //------------------------
 //---------------------------------------------
 #local D = 0.0000001;  // a very little bit to avoid coincident surfaces!!!
@@ -269,11 +256,7 @@ difference {
 // - two cylinders running along the top edges, +/- x
 // - two half-tori at each end of the top
 
-#if (Merge___On = 1)  // 1
- merge{   // outer union/merge
-#else 
- union{ 
-#end 
+union {
 
 #if (Y_Filled___On = 0)
 difference {
