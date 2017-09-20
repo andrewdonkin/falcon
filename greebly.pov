@@ -1,4 +1,5 @@
 #include "shapes3.inc" // f_rounded_box()
+#include "skirtbox.inc"
 
 global_settings {
  //  ambient_light 0
@@ -7,9 +8,13 @@ global_settings {
   assumed_gamma 1
 }
 
+#local floor_pig = pigment {
+    checker color rgb <0.3, 0.3, 1>, colour rgb <0.8,0.8,1>
+  };
+
 plane { y, 0
   pigment {
-    checker color rgb 0.2, colour rgb <1,1,1>
+    floor_pig
   }
 }
 
@@ -78,7 +83,9 @@ object {
   #local Boxz=Box.z;
   union {
     isosurface  {
-      function {f_rounded_box(x-Boxx/2,y,z-Boxz/2, Rbox, Boxx/2, Boxy/2, Boxz/2)}
+      function {f_rounded_box(x-Boxx/2,y,z-Boxz/2, Rbox, Boxx/2, Boxy/2, Boxz/2)
+        // + f_noise3d(x*10, y*20, z*20)/40
+        }
       contained_by {box {<0, 0, 0>,
                          <Boxx, Boxy/2, Boxz>}}
       evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
@@ -118,6 +125,22 @@ object {
   texture { pigment { checker color rgb 0.2, colour rgb <1,1,1> }}
   }
 
+object {
+  skirted_box_y(<0, 0, -1>, <1, 0.4, -0.5>,
+    0.2, 0.03, 0.02, 0) // big rad, top rad, skirt rad, filled
+  texture { floor_pig}
+}
+
+object {
+  skirted_lozenge_y(0, 1, 0.5, 0.2, // end rad
+    0.03, // top rad
+    0.02, // skirt
+    0) // filled
+  rotate -90*y
+  translate <2.5, 0, -1>
+  texture { floor_pig }
+  
+}
 
 #if (0)
 light_source {
@@ -140,6 +163,5 @@ light_source { <2, 1.5, -2> rgb 1
 }
 #end
 
-camera { location <0, 3, -3> look_at <1, 0, 0> angle 40}
-//camera { location <4, 3, -1> look_at <1.5, 0, 1> angle 30}
-//camera { location <0, 3, -1> look_at <1, 0, 1> angle 30}
+camera { location <-0.1, 3, -4> look_at <1, 0, -0.5> angle 40}
+//camera { location <-0.1, 3, -4> look_at <2, 0, -0.9> angle 5}

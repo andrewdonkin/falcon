@@ -66,15 +66,13 @@
                     max(R_Point_1_In.z, R_Point_2_In.z, min(R_Point_1_In.z, R_Point_2_In.z)+2*Rmaj)>; 
 
 //-----------------------------------------------------
-#if (Rmin > D)
 #local Quarter_1 = 
 //#macro Segment_of_Torus( R_major, R_minor, Segment_Angle)
 intersection {
-  torus { Rmaj-Rmin, Rmin }
+  torus { Rmaj-Rmin, Rmin sturm }
   box { <-Rmaj-Rmin-D, -Rmin-D, -Rmaj-Rmin-D>, <0, Rmin+D, 0> }
   translate<Rmaj,0,Rmaj>
 }
-#end
 
 //---------------------------------------------------------
 // merge/union of 
@@ -161,12 +159,12 @@ object{ Quarter_1  rotate<0,-3*90,0> translate<P1.x,P2.y-Rmin,P2.z> }
 
 #local Quarter_2 = 
 intersection {
-  torus { Rmaj, Rskirt }
+  torus { Rmaj, Rskirt sturm}
   box { <-Rmaj-Rskirt-D, 0, -Rmaj-Rskirt-D>, <0, Rskirt+Rskirt+D, 0> }
 }
 #local Quarter_3 = 
 intersection {
-  torus { Rmaj+Rskirt, Rskirt }
+  torus { Rmaj+Rskirt, Rskirt sturm }
   box { <-Rmaj-Rskirt*2, -Rskirt-D, -Rmaj-Rskirt*2>, <0, Rskirt+D, 0> }
 }
 
@@ -243,6 +241,7 @@ difference {
 #end 
 
 //---------------------------------------------------------
+// not including the skirt, it goes like this:
 // merge/union of 
 // - two large corner cylinders (large means going to the X extremities)
 // - one large (but short) box
@@ -266,6 +265,11 @@ difference {
  // First the skirt.
  // It leaves two bits of tori inside that we will scoop out later if hollow
  
+ #local Half = intersection {
+    torus { Rmaj+Rskirt, Rskirt sturm }
+    plane {z, 0}
+    }
+ 
  difference {
    merge {
      // these two cylinders lying at the base of the box
@@ -275,13 +279,13 @@ difference {
      cylinder {<2*Rmaj, 0, Rmaj>, <2*Rmaj, 0, Z-Rmaj>, Rskirt} // right
      
      // these two half-tori will have another taken out of them
-     object {torus { Rmaj, Rskirt } rotate   0*y translate <Rmaj, 0, Rmaj> } // near
-     object {torus { Rmaj, Rskirt } rotate 180*y translate <Rmaj, 0, Z-Rmaj> } // near
+     object {torus { Rmaj, Rskirt } translate <Rmaj, 0, Rmaj> sturm } // near
+     object {torus { Rmaj, Rskirt } translate <Rmaj, 0, Z-Rmaj> sturm } // near
    }
    cylinder {<-Rskirt, Rskirt, Rmaj>, <-Rskirt, Rskirt, Z-Rmaj>, Rskirt} // left
    cylinder {<2*Rmaj-Rskirt, Rskirt, Rmaj>, <2*Rmaj+Rskirt, Rskirt, Z-Rmaj>, Rskirt} // left
-   object {torus { Rmaj+Rskirt, Rskirt } rotate 0*y translate <Rmaj, Rskirt, Rmaj> } // near
-   object {torus { Rmaj+Rskirt, Rskirt } rotate 180*y translate <Rmaj, Rskirt, Z-Rmaj> } // near
+   object {Half rotate 0*y translate <Rmaj, Rskirt, Rmaj+D> } // near
+   object {Half rotate 180*y translate <Rmaj, Rskirt, Z-Rmaj-D> } // near
    plane {y, 0}
  }
 
@@ -319,7 +323,7 @@ cylinder{ <Rmin,          Y-Rmin, Rmaj>, <Rmin,          Y-Rmin, Z-Rmaj>, Rmin }
 cylinder{ <Rmaj*2 - Rmin, Y-Rmin, Rmaj>, <Rmaj*2 - Rmin, Y-Rmin, Z-Rmaj>, Rmin }
 
 // end caps
-#local End1 = torus { Rmaj-Rmin, Rmin };
+#local End1 = torus { Rmaj-Rmin, Rmin sturm };
 #if (Y_Filled___On = 1)
 # local End2 = End1;
 #else // hollow
