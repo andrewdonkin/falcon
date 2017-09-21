@@ -35,9 +35,9 @@ global_settings { assumed_gamma 1.0 }
 #break
 #case (1)
   #declare Camera_Location =  <2.0  , 1.75 ,-2.0> ;  // diagonal view
-//  #declare Camera_Location =  <2.0  , 2.75 ,4.0> ;  // diagonal view
+  //#declare Camera_Location =  <2.0  , 2.75 ,4.0> ;  // diagonal view
   #declare Camera_Look_At  =  < 0.5 , 0.15 , 0.5> ;
-  #declare Camera_Angle    =  38 ;
+  #declare Camera_Angle    =  48 ;
 #break
 #case (2)
   #declare Camera_Location = < 3.0, 1.0 , 0.0> ;  // right side view
@@ -188,16 +188,29 @@ object{ skirted_box_y ( <-0.1,0.1,0.0>, <-0.9 ,0.5, 1.5>,  // Point_1, Point_2 o
   }//------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------
 
-object{ skirted_lozenge_y ( <0.5,0.1,0.0>,   // Point_1, Point_2 of outline box
+object{ skirted_lozenge_y (
                       1.5, 0.4, // length (Z), top
                       0.18, 0.04, // big end radius, smaller top radius
                       0.02, // skirting
-                      0 // Y_Filled___On,
+                      1 // Y_Filled___On,
                     ) //----------------------------------------
         texture {
               pigment{ color rgb <1,1,1 >*0.85 } 
               finish { phong 1 reflection 0.1 } 
         } // end of texture      
-       scale<1,1,1>  rotate< 0,0,0> translate<0.0,0.0,0.0>
+       scale<1,1,1>  rotate< 0,0,0> translate <0.5,0.1,0.0>
   }//------------------------------------------------------------------------------------
 
+object {skirted_blister (1, 0.4, 0.2)
+        texture {
+              pigment{ color rgb <1,1,1 >*0.85 } 
+              finish { phong 1 reflection 0.1 } 
+        } // end of texture      
+  translate <1.3,0.1,0>
+}
+plane {y, 0.1
+        texture {
+              pigment{ color rgb <1,1,1 >*0.85 } 
+              finish { phong 1 reflection 0.1 } 
+        } // end of texture      
+}  

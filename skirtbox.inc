@@ -11,6 +11,10 @@
 
 // This file needs a lot of work.  Capitalise, rename vars, indent.
 
+#ifndef (Skirtbox_inc)
+#declare Skirtbox_inc = version;
+
+
 // ############################################################################
 #macro skirted_box_y (  R_Point_1_In, R_Point_2_In,         // box outline
                       Border_Radius_Big,    // radius around vertical edges 
@@ -169,7 +173,7 @@ intersection {
 }
 
 difference {
-  merge {
+  union {
     // these four cylinders lying at the base of the box
     // will get another cylinder subtracted later
     // to form a radiused skirting.
@@ -203,10 +207,10 @@ difference {
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-// This macro extends to the -x and -z of P1, by Rskirt.  Check the bounded_by
+// This object is centred on x=0
 
 // ############################################################################
-#macro skirted_lozenge_y (P1,         // box bottom left
+#macro skirted_lozenge_y (
                       Z, Y,          // length and height
                       End_Radius,    // radius around ends
                       Top_Radius,  // radius around top
@@ -271,56 +275,57 @@ difference {
     }
  
  difference {
-   merge {
+   union {
      // these two cylinders lying at the base of the box
      // will get another cylinder subtracted later
      // to form a radiused skirting.
-     cylinder {<0,      0, Rmaj>, <0,      0, Z-Rmaj>, Rskirt} // left
-     cylinder {<2*Rmaj, 0, Rmaj>, <2*Rmaj, 0, Z-Rmaj>, Rskirt} // right
+     cylinder {<-Rmaj, 0, Rmaj>, <-Rmaj, 0, Z-Rmaj>, Rskirt} // left
+     cylinder {< Rmaj, 0, Rmaj>, < Rmaj, 0, Z-Rmaj>, Rskirt} // right
      
      // these two half-tori will have another taken out of them
-     object {torus { Rmaj, Rskirt } translate <Rmaj, 0, Rmaj> sturm } // near
-     object {torus { Rmaj, Rskirt } translate <Rmaj, 0, Z-Rmaj> sturm } // near
+     object {torus { Rmaj, Rskirt } translate <0, 0, Rmaj> sturm } // near
+     object {torus { Rmaj, Rskirt } translate <0, 0, Z-Rmaj> sturm } // near
    }
-   cylinder {<-Rskirt, Rskirt, Rmaj>, <-Rskirt, Rskirt, Z-Rmaj>, Rskirt} // left
-   cylinder {<2*Rmaj-Rskirt, Rskirt, Rmaj>, <2*Rmaj+Rskirt, Rskirt, Z-Rmaj>, Rskirt} // left
-   object {Half rotate 0*y translate <Rmaj, Rskirt, Rmaj+D> } // near
-   object {Half rotate 180*y translate <Rmaj, Rskirt, Z-Rmaj-D> } // near
+   cylinder {<-Rmaj-Rskirt, Rskirt, Rmaj>, <-Rmaj-Rskirt, Rskirt, Z-Rmaj>, Rskirt} // left
+   cylinder {< Rmaj+Rskirt, Rskirt, Rmaj>, < Rmaj+Rskirt, Rskirt, Z-Rmaj>, Rskirt} // right
+   object {Half rotate 0*y translate <0, Rskirt, Rmaj+D> } // near
+   object {Half rotate 180*y translate <0, Rskirt, Z-Rmaj-D> } // near
    plane {y, 0}
  }
 
 
  // Two largest cylinders, short
- cylinder{ <Rmaj, 0, Rmaj>, <Rmaj, Y-Rmin, Rmaj>, Rmaj}
- cylinder{ <Rmaj, 0, Z-Rmaj>, <Rmaj, Y-Rmin, Z-Rmaj>, Rmaj}
+ cylinder{ <0, 0, Rmaj>, <0, Y-Rmin, Rmaj>, Rmaj}
+ cylinder{ <0, 0, Z-Rmaj>, <0, Y-Rmin, Z-Rmaj>, Rmaj}
 
- box{ <0, 0 , Rmaj>, <Rmaj*2, Y-Rmin, Z-Rmaj>} // coincident
+ box{ <-Rmaj, 0 , Rmaj>, <Rmaj, Y-Rmin, Z-Rmaj>} // coincident
 
 
 #if (Y_Filled___On = 1)
 
- box{ <Rmin, 0, Rmaj>, <Rmaj * 2 - Rmin, Y, Z - Rmaj>}
+ box{ <-Rmaj+Rmin, 0, Rmaj>, <Rmaj - Rmin, Y, Z - Rmaj>}
 
- cylinder{ <Rmaj, 0, Rmaj>, <Rmaj, Y, Rmaj>, Rmaj-Rmin}
- cylinder{ <Rmaj, 0, Z-Rmaj>, <Rmaj, Y, Z-Rmaj>, Rmaj-Rmin}
+ cylinder{ <0, 0, Rmaj>, <0, Y, Rmaj>, Rmaj-Rmin}
+ cylinder{ <0, 0, Z-Rmaj>, <0, Y, Z-Rmaj>, Rmaj-Rmin}
 
 #else // hollow
 
  } // the end of the union
 
  // subtract two small cylinders
- cylinder{ <Rmaj, -D, Rmaj>, <Rmaj, Y, Rmaj>, Rmaj-Rmin*2}
- cylinder{ <Rmaj, -D, Z-Rmaj>, <Rmaj, Y, Z-Rmaj>, Rmaj-Rmin*2}
+ cylinder{ <0, -D, Rmaj>, <0, Y, Rmaj>, Rmaj-Rmin*2}
+ cylinder{ <0, -D, Z-Rmaj>, <0, Y, Z-Rmaj>, Rmaj-Rmin*2}
 
  // subtract the rest of the interior
- box{ <Rmin*2, -D, Rmaj>, <Rmaj * 2 - Rmin * 2, Y, Z - Rmaj>}
+ box{ <-(Rmaj - (Rmin*2)), -D, Rmaj>, <Rmaj - Rmin*2, Y, Z - Rmaj>}
 
 } // end our differences
 #end //hollow
- 
+
+//cap it 
 // horizontal small border cylinders on top
-cylinder{ <Rmin,          Y-Rmin, Rmaj>, <Rmin,          Y-Rmin, Z-Rmaj>, Rmin }
-cylinder{ <Rmaj*2 - Rmin, Y-Rmin, Rmaj>, <Rmaj*2 - Rmin, Y-Rmin, Z-Rmaj>, Rmin }
+cylinder{ <-Rmaj + Rmin, Y-Rmin, Rmaj>, <-Rmaj+Rmin, Y-Rmin, Z-Rmaj>, Rmin }
+cylinder{ < Rmaj - Rmin, Y-Rmin, Rmaj>, < Rmaj-Rmin, Y-Rmin, Z-Rmaj>, Rmin }
 
 // end caps
 #local End1 = torus { Rmaj-Rmin, Rmin sturm };
@@ -331,11 +336,61 @@ cylinder{ <Rmaj*2 - Rmin, Y-Rmin, Rmaj>, <Rmaj*2 - Rmin, Y-Rmin, Z-Rmaj>, Rmin }
 # local End2 = object { End1 rotate 180*y };
 #end // hollow
 
-object{ End1 translate<Rmaj,Y-Rmin,Rmaj> }
-object{ End2 translate<Rmaj,Y-Rmin,Z-Rmaj> }
+object{ End1 translate<0,Y-Rmin,Rmaj> }
+object{ End2 translate<0,Y-Rmin,Z-Rmaj> }
 
-translate P1
 
 }// end of outer union/merge
 #end// of macro ------------------------------------------------------// end of macro
+
+// ############################################################################
+// ############################################################################
+// ############################################################################
+// Two spheres joined by a cylinder, with a skirting.
+// Bounded by X -R-Rskirt to R+Rskirt; Y 0 to R;  Z -Rskirt to Z+Rskirt
+#macro skirted_blister (Z,         // overall length not incl skirt
+                      R,    // radius around ends
+                      Rskirt  // radius of skirt
+                   ) //------------------------
+
+//#local Rd = R * cos(asin(Rskirt/R));
+#local D = 0.0000001;  // a very little bit to avoid coincident surfaces!!!
+#local Theta = asin(Rskirt/(R+Rskirt));
+#local Rdskirt = (R+Rskirt) * cos(Theta);
+#local Rd = Rdskirt-Rskirt;
+#local Yd = Rskirt * (R/(R+Rskirt));
+
+#local Half = intersection {
+  torus { Rdskirt, Rskirt sturm }
+  plane {z, 0}
+}
+
+intersection {
+  union {
+    sphere { <0, 0, R> R }
+    sphere { <0, 0, Z-R> R }
+    cylinder { <0, 0, R>, <0, 0, Z-R>, R }
+    
+    // the skirt
+    difference {
+      union {
+        cylinder {<-Rd, 0, R>, <-Rd, 0, Z-R>, Rskirt}
+        cylinder {<Rd, 0, R>, <Rd, 0, Z-R>, Rskirt}
+        torus {Rd, Rskirt sturm translate <0, 0, R>}
+        torus {Rd, Rskirt sturm translate <0, 0, Z-R>}
+      }
+      cylinder {<-Rdskirt, Rskirt, R>,   <-Rdskirt, Rskirt, Z-R>, Rskirt}
+      cylinder {< Rdskirt, Rskirt, R-D>, < Rdskirt, Rskirt, Z-R+D>, Rskirt}
+      object {Half translate <0, Rskirt, R+D>}
+      object {Half rotate 180*y translate <0, Rskirt, Z-R-D>}
+      plane {-y, -Yd}
+    }
+  }
+  plane {-y, 0}
+}
+
+#end // skirted_blister
+
+
+#end // skirtbox.inc
 

@@ -132,14 +132,21 @@ object {
 }
 
 object {
-  skirted_lozenge_y(0, 1, 0.5, 0.2, // end rad
+  skirted_lozenge_y(1, 0.5, 0.2, // end rad
     0.03, // top rad
     0.02, // skirt
     0) // filled
-  rotate -90*y
-  translate <2.5, 0, -1>
+  rotate 90*y
+  translate <1.5, 0, -0.5>
   texture { floor_pig }
-  
+}
+object {
+  skirted_blister(1, // Z length
+  0.4, 0.3 // large and skirting radii
+   )
+  rotate 90*y
+  translate <1, 0, -1>
+  texture { floor_pig }
 }
 
 #if (0)
