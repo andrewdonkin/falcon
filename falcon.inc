@@ -49,16 +49,26 @@
  // mandible reaches dia 45 dome at x=4, z=-22
 
   // main body, solid
-  hexdron(
-    <3.313,  1, -39.375>,
-    <    4,  1, -22>,
-    <   20,  1, -10.1>,
-    < 5.75,  1, -39.375>,
-    <3.313, -1, -39.375>,
-    <    4, -1, -22>,
-    <   20, -1, -10.1>,
-    < 5.75, -1, -39.375>,
-    0.02)
+  difference{
+      union {
+      hexdron(
+      <3.313,  1, -39.375>,
+      <    4,  1, -22>,
+      <   20,  1, -10.1>,
+      < 5.75,  1, -39.375>,
+      <3.313, -1, -39.375>,
+      <    4, -1, -22>,
+      <   20, -1, -10.1>,
+      < 5.75, -1, -39.375>,
+      0.05)
+      cylinder {<7, -1.05, -29.625>, <7, 1.05, -29.625>, 2}
+      cylinder {<10, -1.05, -23.375>, <10, 1.05, -23.375>, 2}
+    }
+    cylinder {<7, -1.1, -29.625>, <7, 1.1, -29.625>, 1.5}
+    cylinder {<10, -1.1, -23.375>, <10, 1.1, -23.375>, 1.5}
+    cylinder {<7, -0.9, -29.625>, <7, 0.9, -29.625>, 1.7}
+    cylinder {<10, -0.8, -23.375>, <10, 0.8, -23.375>, 1.7}
+  }
 
   // Ferrari V12 engine cover, facing -z, x=0 to x=2.4, y=+/-1
 
@@ -127,14 +137,14 @@
     
       intersection { // 48 dia shells
 	      union {
-      	  difference {
-      	    sphere { <0, -72.64, 0>, 77.48 }
-      	    sphere { <0, -72.64, 0>, 77.38 }
-      	  }
-      	  difference {
-      	    sphere { <0, 72.64, 0>, 77.48 }
-      	    sphere { <0, 72.64, 0>, 77.38 }
-      	  }
+      	    difference {
+              sphere { <0, -72.64, 0>, 77.48 }
+              sphere { <0, -72.64, 0>, 77.38 }
+      	    }
+            difference {
+              sphere { <0, 72.64, 0>, 77.48 }
+              sphere { <0, 72.64, 0>, 77.38 }
+            }
     	  }
 	      cylinder { <0, -5, 0>, <0, 5, 0>, 24} // larger radius
 	      // larger radius stops 42.3 degrees from the X axis
@@ -145,7 +155,7 @@
 	      //mandibles tangent 45u circle at 29.5 degrees from X axis.
       }
     }
-    intersection { // left (starboard) docking wedge cut
+    intersection { // left (starboard, facing camera) docking wedge cut
       plane { -z, 0 rotate -20*y translate -10*x}
       plane {  z, 0 rotate  20*y translate -10*x}
     }
@@ -159,7 +169,6 @@
   object {docking rotate 180*y}
 
   object {mandible}
-  object {mandible rotate 180*z}
-
+  object {mandible scale <-1, 1, 1>}
 }
 

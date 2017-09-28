@@ -2,19 +2,20 @@
 #include "skirtbox.inc"
 
 global_settings {
- //  ambient_light 0
-  // ambient_light 0  radiosity {  }
+  ambient_light 0  radiosity {  }
   // max_trace_level 200
   assumed_gamma 1
 }
 
-#local floor_pig = pigment {
-    checker color rgb <0.3, 0.3, 1>, colour rgb <0.8,0.8,1>
+#local floor_tex = texture {
+    pigment {checker color rgb <0.3, 0.3, 1>, colour rgb <0.8,0.8,1>}
+    finish { phong 1 reflection 0.1 }
+
   };
 
 plane { y, 0
-  pigment {
-    floor_pig
+  texture {
+    floor_tex
   }
 }
 
@@ -128,7 +129,7 @@ object {
 object {
   skirted_box_y(<0, 0, -1>, <1, 0.4, -0.5>,
     0.2, 0.03, 0.02, 0) // big rad, top rad, skirt rad, filled
-  texture { floor_pig}
+  texture { floor_tex}
 }
 
 object {
@@ -138,29 +139,29 @@ object {
     0) // filled
   rotate 90*y
   translate <1.5, 0, -0.5>
-  texture { floor_pig }
+  texture { floor_tex }
 }
 object {
   skirted_blister(1, // Z length
-  0.4, 0.3 // large and skirting radii
+  0.4, 0.2 // large and skirting radii
    )
   rotate 90*y
   translate <1, 0, -1>
-  texture { floor_pig }
+  texture { floor_tex }
 }
 
-#if (0)
+#if (1)
 light_source {
   <0,0,0>             // light's position (translated below)
   color rgb 1.0       // light's color
   area_light
-  <0.5, 0, 0> <0, 0.5, 0>
-  9, 9
+  <0.4, 0, 0> <0, 0.4, 0>
+  18, 18
   adaptive 1          // 0,1,2,3...
-  //jitter              // adds random softening of light
+  jitter              // adds random softening of light
   circular            // make the shape of the light circular
    orient              // orient light
-    looks_like {sphere {0, 0.1 texture {pigment {color rgb <1,1,1>}} finish { ambient 1 diffuse 1 }}}
+  //  looks_like {sphere {0, 0.1 texture {pigment {color rgb <1,1,1>}} finish { ambient 1 diffuse 1 }}}
   translate <2, 1.5, -2>
 }
 #else

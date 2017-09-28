@@ -22,10 +22,11 @@ http://studioscale.com/
 Calipers on a Master Replica
 http://s243.photobucket.com/user/Helder22pictures/library/MR%20Falcon%20bottom
 
-Two insane modellers:
+Insane modellers:
 
 http://www.ketzer.com/MF_making_page.html
-http://www.m-moeslund.dk/falcon.html
+http://www.m-moeslund.dk/falcon.html (gone)
+http://millenniumfalcona.blogspot.co.nz/
 
 Parametrics:
   
