@@ -23,13 +23,13 @@
 // rectangles, which is the definition of a "cuboid" according to some.
 // With the edges rounded off.  Parameters are the vertices of the corners.
 // That allows for non-flat sides, which are probably not desirable
-// but make a perfectly good dodecahedron.
+// but make a perfectly good irregular dodecahedron.
 // NOTE:  its extents are increased beyond the corner params by the edge radius!
-// That saves a lot of geometry.
+// Adding the rounding rather than subtracting it saves a lot of geometry.
 // Corners must be clockwise around the top,
 // then clockwise (viewed from the top) around the bottom
 // starting from the corner below the first.
-// The "Use_saddle" must be false if you have any perfectly flat sides.
+// The "Use_saddle" must be false if you have any flat sides.
 // Can't remember why I called it a hexdron.
 // Six sides, I guess.  Or maybe I felt cursed, working on it?
 
@@ -42,23 +42,24 @@
 #macro hexdron(
   tlf, tlr, trr, trf, // top quadrilateral.  Top left front, top left rear, etc.
   blf, blr, brr, brf, // bottom quadrilateral
-  smallr	      // radius of rounded edges
-  , Use_saddle
+  smallr	          // radius of rounded edges
+  , Use_saddle        // doesn't work if a side is flat
   )
   
-  #if (vlength(vnormalize(vcross(tlr-tlf, trf-tlf))
-    - vnormalize(vcross(trf-trr, tlr-trr)) ))
-    #warning "not a flat top quadrilateral"
-  #end
-  #if (vlength(vnormalize(vcross(blr-blf, brf-blf))
-    - vnormalize(vcross(brf-brr, blr-brr)) ))
-    #warning "not a flat bottom quadrilateral"
-  #end
-  // should do the other four too
-  // Turns out, thanks to extra effort below, it looks good provided the plane is concave,
+  //#if (vlength(vnormalize(vcross(tlr-tlf, trf-tlf))
+  //  - vnormalize(vcross(trf-trr, tlr-trr)) ))
+  //  #warning "not a flat top quadrilateral"
+  //#end
+  //#if (vlength(vnormalize(vcross(blr-blf, brf-blf))
+  //  - vnormalize(vcross(brf-brr, blr-brr)) ))
+  //  #warning "not a flat bottom quadrilateral"
+  //#end
+  // should do the other four too.
+  // Turns out, extra effort below makes a side of two triangles look okay
   // so we needn't fuss.
   
-  // Draw a quadrilateral between four points.
+  // Draw a two triangles between four points.
+  // The two triangles will share a edge between the second and fourth points.
   #macro hexface (
     lf, lr, rr, rf    // rectangle
     )
@@ -78,19 +79,18 @@
   union {
     // faces
     hexface(tlf, tlr, trr, trf) // top
-    hexface(blf, brf, brr, blr) // bottom, clockwise from apparent top left, no matter
-    hexface(blf, tlf, trf, brf) // front
-    hexface(blr, tlr, tlf, blf) // left
-    hexface(brr, trr, tlr, blr) // rear, clockwise from apparent bot left
+    hexface(brf, brr, blr, blf) // bottom, clockwise from apparent top right
+    hexface(tlf, trf, brf, blf) // front
+    hexface(trr, tlr, blr, brr) // rear, clockwise from apparent top left
     hexface(brf, trf, trr, brr) // right
-
+    hexface(blr, tlr, tlf, blf) // left
 #if(Use_saddle)
 #else
     // Diagonals between opposite corners on a face.
     // Unnecessary if faces are flat or concave.  Looks damned good if convex.
-      cylinder {tlf, brf, smallr}  cylinder {tlr, blf, smallr} // front, left
-      cylinder {trr, blr, smallr}  cylinder {trf, brr, smallr} // rear, right
-      cylinder {tlr, trf, smallr}  cylinder {blr, brf, smallr} // rear, right
+      cylinder {blf, trf, smallr}  cylinder {tlr, blf, smallr} // front, left
+      cylinder {tlr, brr, smallr}  cylinder {trf, brr, smallr} // rear, right
+      cylinder {tlr, trf, smallr}  cylinder {blf, brr, smallr} // top, bottom
 #end
 
     #if (1)
