@@ -46,6 +46,10 @@
   , Use_saddle        // doesn't work if a side is flat
   )
   
+  #ifdef (CHEAP)
+    #local smallr = 0;
+  #end
+  
   //#if (vlength(vnormalize(vcross(tlr-tlf, trf-tlf))
   //  - vnormalize(vcross(trf-trr, tlr-trr)) ))
   //  #warning "not a flat top quadrilateral"
@@ -84,16 +88,16 @@
     hexface(trr, tlr, blr, brr) // rear, clockwise from apparent top left
     hexface(brf, trf, trr, brr) // right
     hexface(blr, tlr, tlf, blf) // left
-#if(Use_saddle)
-#else
+
     // Diagonals between opposite corners on a face.
     // Unnecessary if faces are flat or concave.  Looks damned good if convex.
+    #if((Use_saddle = 0) * smallr)
       cylinder {blf, trf, smallr}  cylinder {tlr, blf, smallr} // front, left
       cylinder {tlr, brr, smallr}  cylinder {trf, brr, smallr} // rear, right
       cylinder {tlr, trf, smallr}  cylinder {blf, brr, smallr} // top, bottom
-#end
+    #end
 
-    #if (1)
+    #if (smallr)
       // corners
       sphere {tlf, smallr}  sphere {tlr, smallr}  sphere {trr, smallr}  sphere {trf, smallr}
       sphere {blf, smallr}  sphere {blr, smallr}  sphere {brr, smallr}  sphere {brf, smallr}
