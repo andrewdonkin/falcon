@@ -36,6 +36,15 @@ plane {y, 0
 #include "hexdron.inc"
 
 #macro cornerball (C, V1, V2, V3, R)
+
+#local Det=Matrix3determinated(A1,B1,C1, A2,B2,C2, A3,B3,C3);
+#if (Det = 0)
+#warning pffffpfpfpf
+#end
+#local X = - Matrix3determinated(D1,B1,C1, D2,B2,C2, D3,B3,C3) / Det;
+#local Y = - Matrix3determinated(A1,D1,C1, A2,D2,C2, A3,D3,C3) / Det;
+#local Z = - Matrix3determinated(A1,B1,D1, A2,B2,D2, A3,B3,D3) / Det;
+
   #local N31=vcross(V3-C, V1-C);
   #local N23=vcross(V2-C, V3-C);
   //#local Bvec=vnormalize(vcross(N23, N31));

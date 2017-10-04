@@ -34,3 +34,5 @@ Parametrics:
     http://www.f-lohmueller.de/pov_tut/all_shapes/shapes570e.htm
   For burns/impacts:
     http://www.f-lohmueller.de/pov_tut/all_shapes/shapes655e.htm
+
+Vince, Geometry For Computer Graphics
