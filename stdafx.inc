@@ -15,8 +15,14 @@
 // Let's hope they don't make a Matrix 4.
 // page 59
 #macro PlaneFrom3Points(O, V1, V2)
- #local A = Matrix3determinated(1, O.y, C.z,  1, V2.y, V2.z,  1, V3.y, V3.z);
- #local B = Matrix3determinated(O.x, 1, O.z,  V2.x, 1, V2.z,  V3.x, 1, V3.z);
- #local C = Matrix3determinated(O.x, O.y, 1,  V2.x, V2.y, 1,  V3.x, V3.y, 1);
- (A, B, C, -1 * sqrt(A * O.x + B * O.y + C * O.z))
+ #local A = Matrix3determinated(1, O.y, O.z,  1, V1.y, V1.z,  1, V2.y, V2.z);
+ #local B = Matrix3determinated(O.x, 1, O.z,  V1.x, 1, V1.z,  V2.x, 1, V2.z);
+ #local C = Matrix3determinated(O.x, O.y, 1,  V1.x, V1.y, 1,  V2.x, V2.y, 1);
+ #if (A*A + B*B + C*C = 0)
+ # local D = 0;
+ #else
+ # local D = (A * O.x + B * O.y + C * O.z) / sqrt(A*A + B*B + C*C);
+ #end
+ #warning concat( "PF3P ", str(A, 1, 2), " ", str(B, 1, 2), " ", str(C, 1, 2), " ", str(D, 1, 2))
+ (vnormalize(<A, B, C>), D)
 #end
