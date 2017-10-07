@@ -21,11 +21,12 @@
 
 // A hexdron is a polyhedron with six quadrilateral sides, not necessarily
 // rectangles, which is the definition of a "cuboid" according to some.
-// With the edges rounded off.  Parameters are the vertices of the corners.
-// That allows for non-flat sides, which are probably not desirable
-// but make a perfectly good irregular dodecahedron.
-// NOTE:  its extents are increased beyond the corner params by the edge radius!
-// Adding the rounding rather than subtracting it saves a lot of geometry.
+// With the edges rounded off.  Parameters are the vertices of the corners,
+// before they got sanded off.
+// That allows for non-flat sides, which makes a perfectly good dodecahedron
+// with triangular sides.
+// The resulting shape should not extend beyond the corner params.
+// If your corners are tight, it may be considerably smaller.
 // Corners must be clockwise around the top,
 // then clockwise (viewed from the top) around the bottom
 // starting from the corner below the first.
@@ -33,21 +34,22 @@
 // Can't remember why I called it a hexdron.
 // Six sides, I guess.  Or maybe I felt cursed, working on it?
 
-// Aside:  a saddle would handle non-flat sides better.  See
+// Aside:  a saddle handles non-flat sides better.  See
 // http://www.geocities.ws/evilsnack/matrix.html .
 // Picking the vertices is a p.i.t.a.
 
 // #include "math.inc" // VAngleD not needed any more.  DIY FTW?
+#include "stdafx.inc"
 
 #macro hexdron(
-  tlf, tlr, trr, trf, // top quadrilateral.  Top left front, top left rear, etc.
-  blf, blr, brr, brf, // bottom quadrilateral
-  smallr	          // radius of rounded edges
+  TLF, TLR, TRR, TRF, // top quadrilateral.  Top left front, top left rear, etc.
+  BLF, BLR, BRR, BRF, // bottom quadrilateral
+  Smallr	          // radius of rounded edges
   , Use_saddle        // doesn't work if a side is flat
   )
   
   #ifdef (CHEAP)
-    #local smallr = 0;
+    #local Smallr = 0;
   #end
   
   //#if (vlength(vnormalize(vcross(tlr-tlf, trf-tlf))
@@ -61,18 +63,28 @@
   // should do the other four too.
   // Turns out, extra effort below makes a side of two triangles look okay
   // so we needn't fuss.
-  
+
+  #local BLF2 = cornerball(BLF, BLR, TLF, BRF, Smallr);
+  #local TLF2 = cornerball(TLF, TRF, BLF, TLR, Smallr);
+  #local TRF2 = cornerball(TRF, BRF, TLF, TRR, Smallr);
+  #local BRF2 = cornerball(BRF, BLF, TRF, BRR, Smallr);
+
+  #local BLR2 = cornerball(BLR, TLR, BLF, BRR, Smallr);
+  #local TLR2 = cornerball(TLR, BLR, TRR, TLF, Smallr);
+  #local TRR2 = cornerball(TRR, BRR, TRF, TLR, Smallr);
+  #local BRR2 = cornerball(BRR, TRR, BLR, BRF, Smallr);
+
   // Draw a two triangles between four points.
   // The two triangles will share a edge between the second and fourth points.
   #macro hexface (
     lf, lr, rr, rf    // rectangle
     )
     // use smallr and Use_saddle from parent scope, ewww
-    #local nml_lf = smallr * vnormalize(vcross(lr-lf, rf-lf));
-    #local nml_rr = smallr * vnormalize(vcross(rf-rr, lr-rr));
+    #local nml_lf = Smallr * vnormalize(vcross(lr-lf, rf-lf));
+    #local nml_rr = Smallr * vnormalize(vcross(rf-rr, lr-rr));
     #if (Use_saddle)
-      #local nml_lr = smallr * vnormalize(vcross(rr-lr, lf-lr));
-      #local nml_rf = smallr * vnormalize(vcross(lf-rf, rr-rf));
+      #local nml_lr = Smallr * vnormalize(vcross(rr-lr, lf-lr));
+      #local nml_rf = Smallr * vnormalize(vcross(lf-rf, rr-rf));
       saddleup (rf+nml_rf, lf+nml_lf, lr+nml_lr, rr+nml_rr)
     #else
       triangle {rf+nml_lf, lf+nml_lf, lr+nml_lf}
@@ -82,36 +94,41 @@
 
   union {
     // faces
-    hexface(tlf, tlr, trr, trf) // top
-    hexface(brf, brr, blr, blf) // bottom, clockwise from apparent top right
-    hexface(tlf, trf, brf, blf) // front
-    hexface(trr, tlr, blr, brr) // rear, clockwise from apparent top left
-    hexface(brf, trf, trr, brr) // right
-    hexface(blr, tlr, tlf, blf) // left
-
+    #if (1)
+    hexface(TLF2, TLR2, TRR2, TRF2) // top
+    hexface(BRF2, BRR2, BLR2, BLF2) // bottom, clockwise from apparent top right
+    hexface(TLF2, TRF2, BRF2, BLF2) // front
+    hexface(TRR2, TLR2, BLR2, BRR2) // rear, clockwise from apparent top left
+    hexface(BRF2, TRF2, TRR2, BRR2) // right
+    hexface(BLR2, TLR2, TLF2, BLF2) // left
+    #end
+    
     // Diagonals between opposite corners on a face.
     // Unnecessary if faces are flat or concave.  Looks damned good if convex.
-    #if((Use_saddle = 0) * smallr)
-      cylinder {blf, trf, smallr}  cylinder {tlr, blf, smallr} // front, left
-      cylinder {tlr, brr, smallr}  cylinder {trf, brr, smallr} // rear, right
-      cylinder {tlr, trf, smallr}  cylinder {blf, brr, smallr} // top, bottom
+    #if((Use_saddle = 0) * Smallr )
+      cylinder {BLF2, TRF2, Smallr}  cylinder {TLR2, BLF2, Smallr} // front, left
+      cylinder {TLR2, BRR2, Smallr}  cylinder {TRF2, BRR2, Smallr} // rear, right
+      cylinder {TLR2, TRF2, Smallr}  cylinder {BLF2, BRR2, Smallr} // top, bottom
     #end
 
-    #if (smallr)
+    #if (Smallr)
       // corners
-      sphere {tlf, smallr}  sphere {tlr, smallr}  sphere {trr, smallr}  sphere {trf, smallr}
-      sphere {blf, smallr}  sphere {blr, smallr}  sphere {brr, smallr}  sphere {brf, smallr}
+      sphere {TLF2, Smallr}  sphere {TLR2, Smallr}  sphere {TRR2, Smallr}  sphere {TRF2, Smallr}
+      sphere {BLF2, Smallr}  sphere {BLR2, Smallr}  sphere {BRR2, Smallr}  sphere {BRF2, Smallr}
       // edges
-      cylinder {tlf, tlr, smallr}  cylinder {tlr, trr, smallr} // around the top
-      cylinder {trr, trf, smallr}  cylinder {trf, tlf, smallr}
-      cylinder {blf, blr, smallr}  cylinder {blr, brr, smallr} // around the bot
-      cylinder {brr, brf, smallr}  cylinder {brf, blf, smallr}
-      cylinder {tlf, blf, smallr}  cylinder {tlr, blr, smallr} // left verticals
-      cylinder {trf, brf, smallr}  cylinder {trr, brr, smallr} // right verticals
+      #if (1)
+      cylinder {TLF2, TLR2, Smallr}  cylinder {TLR2, TRR2, Smallr} // around the top
+      cylinder {TRR2, TRF2, Smallr}  cylinder {TRF2, TLF2, Smallr}
+      cylinder {BLF2, BLR2, Smallr}  cylinder {BLR2, BRR2, Smallr} // around the bot
+      cylinder {BRR2, BRF2, Smallr}  cylinder {BRF2, BLF2, Smallr}
+      cylinder {TLF2, BLF2, Smallr}  cylinder {TLR2, BLR2, Smallr} // left verticals
+      cylinder {TRF2, BRF2, Smallr}  cylinder {TRR2, BRR2, Smallr} // right verticals
+      #end
     #end
   }
     
 #end
+
 
 
 //========================================
@@ -256,3 +273,77 @@
   } // end hexdron object (normally), or intersection of planes
   
 #end
+
+//======================================================================
+//======================================================================
+// cornerball, in all its glory.
+// Pass in the vertex shared by three trianges (the point of a
+// triangular pyramid),then the three other vertices of the pyramid
+// in clockwise order when looking from outside the object,
+// and cornerball() will return the closest location to the first vertex
+// that a ball of the given radius will fit.
+
+#macro cornerball (C, V1, V2, V3, R)
+
+  #local (P1, D1) = PlaneFrom3Points(C, V1, V2);
+  #local (P2, D2) = PlaneFrom3Points(C, V2, V3);
+  #local (P3, D3) = PlaneFrom3Points(C, V3, V1);
+
+  // Move the planes toward the inside of the shape by the radius of the edging.
+  #local D1 = D1 - R;   #local D2 = D2 - R;   #local D3 = D3 - R;
+  
+  // Find the intersection of the three planes
+  #local Det=Matrix3determinated(P1.x,P1.y,P1.z, P2.x,P2.y,P2.z, P3.x,P3.y,P3.z);
+  #if (Det = 0)
+  # error concat("pffffpfpfpf Det = 0 C:",
+    str(C.x,1,2), ",", str(C.y,1,2), ",",str(C.z,1,2),
+    " V1: ", str(V1.x,1,2), ",", str(V1.y,1,2), ",",str(V1.z,1,2),
+    " V2: ", str(V2.x,1,2), ",", str(V2.y,1,2), ",",str(V2.z,1,2))
+  #end
+  // POV planes are P-D=0.  The intersection calculation expects P+D=0.
+  #local X = (Matrix3determinated(-D1,P1.y,P1.z, -D2,P2.y,P2.z, -D3,P3.y,P3.z) / -Det);
+  #local Y = (Matrix3determinated(P1.x,-D1,P1.z, P2.x,-D2,P2.z, P3.x,-D3,P3.z) / -Det);
+  #local Z = (Matrix3determinated(P1.x,P1.y,-D1, P2.x,P2.y,-D2, P3.x,P3.y,-D3) / -Det);
+
+  #ifdef (DDEBUG)
+  #warning concat("cornerball C:",
+    str(C.x,1,1), ",", str(C.y,1,1), ",",str(C.z,1,1),
+    " V1: ", str(V1.x,1,1), ",", str(V1.y,1,1), ",",str(V1.z,1,1),
+    " V2: ", str(V2.x,1,1), ",", str(V2.y,1,1), ",",str(V2.z,1,1),
+    " V3: ", str(V3.x,1,1), ",", str(V3.y,1,1), ",",str(V3.z,1,1)
+    )
+
+  intersection {plane {P1, D1} plane {P2, D2} plane {P3, D3}}
+
+  #warning concat("P1:", str(P1.x,1,2), ",", str(P1.y,1,2), ",",str(P1.z,1,2), ",", str(D1, 1, 2))
+  #warning concat("P2:", str(P2.x,1,2), ",", str(P2.y,1,2), ",",str(P2.z,1,2), ",", str(D2, 1, 2))
+  #warning concat("P3:", str(P3.x,1,2), ",", str(P3.y,1,2), ",",str(P3.z,1,2), ",", str(D3, 1, 2))
+
+  #warning concat("Det = ", str(Det, 1, 2), " C:",
+    str(C.x,1,2), ",", str(C.y,1,2), ",",str(C.z,1,2),
+    " V1: ", str(V1.x,1,2), ",", str(V1.y,1,2), ",",str(V1.z,1,2),
+    " V2: ", str(V2.x,1,2), ",", str(V2.y,1,2), ",",str(V2.z,1,2),
+    " V3: ", str(V3.x,1,2), ",", str(V3.y,1,2), ",",str(V3.z,1,2))
+
+  #warning concat("XYZ ", str(X, 1, 4), " ", str(Y, 1, 4), " ", str(Z, 1, 4))
+ 
+  disc {(V1+V2)/2 - P1/10000, P1, 0.1 pigment {rgb <1,0,0>}}
+  cylinder {(V1+V2)/2, (V1+V2)/2 + vnormalize(P1)/2, 0.01 pigment {rgb <1,0,0>}}
+  disc {(V2+V3)/2 - P2/10000, P2, 0.1 pigment {rgb <0,1,0>}}
+  cylinder {(V2+V3)/2, (V2+V3)/2 + vnormalize(P2)/2, 0.01 pigment {rgb <0,1,0>}}
+  disc {(V3+V1)/2 - P3/10000, P3, 0.1 pigment {rgb <0,0,1>}}
+  cylinder {(V3+V1)/2, (V3+V1)/2 + vnormalize(P3)/2, 0.01 pigment {rgb <0,0,1>}}
+  triangle {V1, C, V2}
+  triangle {V1, C, V3}
+  triangle {V2, C, V3}
+
+  sphere { <X, Y, Z>, R*1.001 pigment {rgb <0,0,0>}}
+  
+  // sphere {C+B, R/2 pigment {rgb <0,1,0>}}
+  #warning concat("XYZ ", str(X, 1, 4), " ", str(Y, 1, 4), " ", str(Z, 1, 4))
+  #else
+  #end
+  <X, Y, Z>
+  
+#end
+
