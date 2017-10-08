@@ -41,15 +41,30 @@
 // #include "math.inc" // VAngleD not needed any more.  DIY FTW?
 #include "stdafx.inc"
 
-#macro hexdron(
+#macro hexdron_saddle(TLF, TLR, TRR, TRF, BLF, BLR, BRR, BRF, Smallr)
+  _hexdron(TLF, TLR, TRR, TRF, BLF, BLR, BRR, BRF, Smallr
+    , 1        // Use_saddle
+  )
+#end
+
+#macro hexdron(TLF, TLR, TRR, TRF, BLF, BLR, BRR, BRF, Smallr)
+  _hexdron(TLF, TLR, TRR, TRF, BLF, BLR, BRR, BRF, Smallr
+    , 0        // Use_saddle
+  )
+#end
+
+#macro _hexdron(
   TLF, TLR, TRR, TRF, // top quadrilateral.  Top left front, top left rear, etc.
   BLF, BLR, BRR, BRF, // bottom quadrilateral
   Smallr	          // radius of rounded edges
-  , Use_saddle        // doesn't work if a side is flat
+  , optional Use_saddle        // doesn't work if a side is flat
   )
   
+  #ifndef (Use_saddle)
+  # local Use_saddle = 0;
+  #end
   #ifdef (CHEAP)
-    #local Smallr = 0;
+  # local Smallr = 0;
   #end
   
   //#if (vlength(vnormalize(vcross(tlr-tlf, trf-tlf))
@@ -129,7 +144,148 @@
     
 #end
 
+#macro _hexdron2(
+  TLF, TLR, TRR, TRF, // top quadrilateral.  Top left front, top left rear, etc.
+  BLF, BLR, BRR, BRF, // bottom quadrilateral
+  R	          // radius of rounded edges
+  )
+  
+  //#if (vlength(vnormalize(vcross(tlr-tlf, trf-tlf))
+  //  - vnormalize(vcross(trf-trr, tlr-trr)) ))
+  //  #warning "not a flat top quadrilateral"
+  //#end
+  //#if (vlength(vnormalize(vcross(blr-blf, brf-blf))
+  //  - vnormalize(vcross(brf-brr, blr-brr)) ))
+  //  #warning "not a flat bottom quadrilateral"
+  //#end
+  // should do the other four too.
 
+  // go clockwise, viewed from outside the object
+  #local (Ptop, Dtop) = PlaneFrom3Points(TLF, TLR, TRF);
+  #local (Pbot, Dbot) = PlaneFrom3Points(BLF, BRF, BLR);
+  #local (Pfro, Dfro) = PlaneFrom3Points(TLF, TRF, BLF);
+  #local (Plef, Dlef) = PlaneFrom3Points(TLF, BLF, TLR);
+  #local (Prea, Drea) = PlaneFrom3Points(TRR, TLR, BRR);
+  #local (Prig, Drig) = PlaneFrom3Points(BRF, TRF, TRR);
+
+  #ifdef (CHEAP)
+    intersection {
+      plane {Ptop, Dtop}
+      plane {Pbot, Dbot}
+      plane {Pfro, Dfro}
+      plane {Plef, Dlef}
+      plane {Prea, Drea}
+      plane {Prig, Drig}
+    }
+  #else
+    // Find the intersection of the three planes
+    #local Det=Matrix3determinatedV(Ptop, Plef, Pfro);
+    #if (Det = 0)
+      # error concat("pffffpfpfpf Det = 0 C:",
+        str(C.x,1,2), ",", str(C.y,1,2), ",",str(C.z,1,2),
+        " V1: ", str(V1.x,1,2), ",", str(V1.y,1,2), ",",str(V1.z,1,2),
+        " V2: ", str(V2.x,1,2), ",", str(V2.y,1,2), ",",str(V2.z,1,2))
+    #end
+    #local Vtlf = CornerballP(Ptop, Dtop-R, Plef, Dlef-R, Pfro, Dfro-R);
+    #local Vtrf = CornerballP(Ptop, Dtop-R, Prig, Drig-R, Pfro, Dfro-R);
+    #local Vtlr = CornerballP(Ptop, Dtop-R, Plef, Dlef-R, Prea, Drea-R);
+    #local Vtrr = CornerballP(Ptop, Dtop-R, Prig, Drig-R, Prea, Drea-R);
+    #local Vblf = CornerballP(Pbot, Dbot-R, Plef, Dlef-R, Pfro, Dfro-R);
+    #local Vbrf = CornerballP(Pbot, Dbot-R, Prig, Drig-R, Pfro, Dfro-R);
+    #local Vblr = CornerballP(Pbot, Dbot-R, Plef, Dlef-R, Prea, Drea-R);
+    #local Vbrr = CornerballP(Pbot, Dbot-R, Prig, Drig-R, Prea, Drea-R);
+    merge {
+      intersection { // the interior
+        plane {Ptop, Dtop-R}
+        plane {Pbot, Dbot-R}
+        plane {Pfro, Dfro-R}
+        plane {Plef, Dlef-R}
+        plane {Prea, Drea-R}
+        plane {Prig, Drig-R}
+      }
+      // normals are pointing out.  Reducing D moves out of object.
+      // left wall
+      #local (Plt, Dlt) = PlaneFrom3Points(Vtlf, Vtlf+Plef, Vtlr);
+      #local (Plb, Dlb) = PlaneFrom3Points(Vblf, Vblr, Vblf+Plef);
+      #local (Plf, Dlf) = PlaneFrom3Points(Vtlf, Vblf, Vtlf+Plef);
+      #local (Plr, Dlr) = PlaneFrom3Points(Vtlr, Vtlr+Plef, Vblr);
+      intersection {
+        plane {Plef, Dlef}
+        plane {-Plef, -Dlef+2*R}
+        plane {Plt, Dlt}
+        plane {Plb, Dlb}
+        plane {Plr, Dlr}
+        plane {Plf, Dlf}
+      }
+      // right
+      #local (Prt, Drt) = PlaneFrom3Points(Vtrf, Vtrr, Vtrf+Prig);
+      #local (Prb, Drb) = PlaneFrom3Points(Vbrf, Vbrr, Vbrf-Prig);
+      #local (Prf, Drf) = PlaneFrom3Points(Vbrf, Vtrf, Vbrf+Prig);
+      #local (Prr, Drr) = PlaneFrom3Points(Vtrr, Vbrr, Vtrr+Prig);
+      intersection {
+        plane {Prig, Drig} plane {-Prig, -Drig+2*R}
+        plane {Prt, Drt} plane {Prb, Drb} plane {Prf, Drf} plane {Prr, Drr}
+      }
+      // top
+      #local (Ptl, Dtl) = PlaneFrom3Points(Vtlf, Vtlr, Vtlf+Ptop);
+      #local (Ptr, Dtr) = PlaneFrom3Points(Vtrr, Vtrf, Vtrf+Ptop);
+      #local (Ptf, Dtf) = PlaneFrom3Points(Vtrf, Vtlf, Vtrf+Ptop);
+      #local (Ptb, Dtb) = PlaneFrom3Points(Vtrr, Vtlr, Vtrr-Ptop); // b==back
+      intersection {
+        plane {Ptop, Dtop} plane {-Ptop, -Dtop+2*R}
+        plane {Ptl, Dtl} plane {Ptr, Dtr} plane {Ptf, Dtf} plane {Ptb, Dtb}
+      }
+      // bottom
+      #local (Pbl, Dbl) = PlaneFrom3Points(Vblr, Vblf, Vblr+Pbot);
+      #local (Pbr, Dbr) = PlaneFrom3Points(Vbrf, Vbrr, Vbrf+Pbot);
+      #local (Pbf, Dbf) = PlaneFrom3Points(Vbrf, Vblf, Vbrf-Pbot);
+      #local (Pbb, Dbb) = PlaneFrom3Points(Vbrr, Vblr, Vbrr+Pbot); // bb==bottom back
+      intersection {
+        plane {Pbot, Dbot} plane {-Pbot, -Dbot+2*R}
+        plane {Pbl, Dbl} plane {Pbr, Dbr} plane {Pbf, Dbf} plane {Pbb, Dbb}
+      }
+      // front
+      #local (Pfl, Dfl) = PlaneFrom3Points(Vblf, Vtlf, Vblf+Pfro);
+      #local (Pfr, Dfr) = PlaneFrom3Points(Vbrf, Vtrf, Vbrf-Pfro);
+      #local (Pft, Dft) = PlaneFrom3Points(Vtrf, Vtlf, Vtrf-Pfro);
+      #local (Pfb, Dfb) = PlaneFrom3Points(Vbrf, Vblr, Vbrf+Pfro);
+      intersection {
+        plane {Pfro, Dfro} plane {-Pfro, -Dfro+2*R}
+        plane {Pfl, Dfl} plane {Pfr, Dfr} plane {Pft, Dft} plane {Pfb, Dfb}
+      }
+      // rear
+      #local (Prl, Drl) = PlaneFrom3Points(Vblr, Vtlr, Vblr-Prea);
+      #local (Prr, Drr) = PlaneFrom3Points(Vbrr, Vtrr, Vbrr+Prea);
+      #local (Prt, Drt) = PlaneFrom3Points(Vtrr, Vtlr, Vtrr+Prea);
+      #local (Prb, Drb) = PlaneFrom3Points(Vbrr, Vblr, Vbrr-Prea); // rb==rear bottom
+      intersection {
+        plane {Prea, Drea} plane {-Prea, -Drea+2*R}
+        plane {Prl, Drl} plane {Prr, Drr} plane {Prt, Drt} plane {Prb, Drb}
+      }
+      sphere {Vtlf, R}
+      sphere {Vtlr, R}
+      sphere {Vtrr, R}
+      sphere {Vtrf, R}
+      sphere {Vblf, R}
+      sphere {Vblr, R}
+      sphere {Vbrr, R}
+      sphere {Vbrf, R}
+      cylinder {Vtlf, Vtlr, R} // around the top
+      cylinder {Vtlr, Vtrr, R}
+      cylinder {Vtrr, Vtrf, R}
+      cylinder {Vtrf, Vtlf, R}
+      cylinder {Vblf, Vblr, R} // around the bot
+      cylinder {Vblr, Vbrr, R}
+      cylinder {Vbrr, Vbrf, R}
+      cylinder {Vbrf, Vblf, R}
+      cylinder {Vtlf, Vblf, R} // four from top to bot
+      cylinder {Vtlr, Vblr, R}
+      cylinder {Vtrr, Vbrr, R}
+      cylinder {Vtrf, Vbrf, R}
+    }
+  #end
+
+#end
 
 //========================================
 // http://www.geocities.ws/evilsnack/matrix.html
@@ -160,22 +316,22 @@
   smallr // radius of rounded edges
   )
 
-  #if (0)
+  #ifdef (CHEAP)
 
-  // simple version, no curved edges.  This is what I was aiming for below.
-  union {
-
-    intersection {
-      plane { -z, 0 rotate casterfront * x} // front
-      plane { z, 0 rotate -casterback * x translate maxz * z } // back
-      plane { x, 0 rotate camber * z rotate -toein * y translate maxx * x} // right
-      plane { -x, 0 rotate -camber * z rotate toein * y } // left
-      plane { -y, 0} // bottom
-      plane { y, 0 rotate topslope* x translate <0, maxy, tan(radians(casterfront))*maxy>} // top
-      //hollow texture {pigment {rgbf <1, 1, 1, 0.6>} } interior { ior 1}
-    }
+    // simple version, no curved edges.  This is what I was aiming for below.
+    union {
   
-    // union is still open
+      intersection {
+        plane { -z, 0 rotate casterfront * x} // front
+        plane { z, 0 rotate -casterback * x translate maxz * z } // back
+        plane { x, 0 rotate camber * z rotate -toein * y translate maxx * x} // right
+        plane { -x, 0 rotate -camber * z rotate toein * y } // left
+        plane { -y, 0} // bottom
+        plane { y, 0 rotate topslope* x translate <0, maxy, tan(radians(casterfront))*maxy>} // top
+        //hollow texture {pigment {rgbf <1, 1, 1, 0.6>} } interior { ior 1}
+      }
+    
+      // union is still open
 
   #else
 
@@ -223,7 +379,7 @@
   #local tlr = <maxx-trr.x, trr.y, trr.z>;
 
   object {
-      hexdron(
+      _hexdron(
       tlf, tlr, trr, trf,
       blf, blr, brr, brf,
       smallr
@@ -282,7 +438,9 @@
 // in clockwise order when looking from outside the object,
 // and cornerball() will return the closest location to the first vertex
 // that a ball of the given radius will fit.
-
+//
+// Requires normalised plane vectors.
+//
 #macro cornerball (C, V1, V2, V3, R)
 
   #local (P1, D1) = PlaneFrom3Points(C, V1, V2);
@@ -293,7 +451,8 @@
   #local D1 = D1 - R;   #local D2 = D2 - R;   #local D3 = D3 - R;
   
   // Find the intersection of the three planes
-  #local Det=Matrix3determinated(P1.x,P1.y,P1.z, P2.x,P2.y,P2.z, P3.x,P3.y,P3.z);
+  //#local Det=Matrix3determinated(P1.x,P1.y,P1.z, P2.x,P2.y,P2.z, P3.x,P3.y,P3.z);
+  #local Det=Matrix3determinatedV(P1, P2, P3);
   #if (Det = 0)
   # error concat("pffffpfpfpf Det = 0 C:",
     str(C.x,1,2), ",", str(C.y,1,2), ",",str(C.z,1,2),
@@ -306,44 +465,60 @@
   #local Z = (Matrix3determinated(P1.x,P1.y,-D1, P2.x,P2.y,-D2, P3.x,P3.y,-D3) / -Det);
 
   #ifdef (DDEBUG)
-  #warning concat("cornerball C:",
-    str(C.x,1,1), ",", str(C.y,1,1), ",",str(C.z,1,1),
-    " V1: ", str(V1.x,1,1), ",", str(V1.y,1,1), ",",str(V1.z,1,1),
-    " V2: ", str(V2.x,1,1), ",", str(V2.y,1,1), ",",str(V2.z,1,1),
-    " V3: ", str(V3.x,1,1), ",", str(V3.y,1,1), ",",str(V3.z,1,1)
-    )
-
-  intersection {plane {P1, D1} plane {P2, D2} plane {P3, D3}}
-
-  #warning concat("P1:", str(P1.x,1,2), ",", str(P1.y,1,2), ",",str(P1.z,1,2), ",", str(D1, 1, 2))
-  #warning concat("P2:", str(P2.x,1,2), ",", str(P2.y,1,2), ",",str(P2.z,1,2), ",", str(D2, 1, 2))
-  #warning concat("P3:", str(P3.x,1,2), ",", str(P3.y,1,2), ",",str(P3.z,1,2), ",", str(D3, 1, 2))
-
-  #warning concat("Det = ", str(Det, 1, 2), " C:",
-    str(C.x,1,2), ",", str(C.y,1,2), ",",str(C.z,1,2),
-    " V1: ", str(V1.x,1,2), ",", str(V1.y,1,2), ",",str(V1.z,1,2),
-    " V2: ", str(V2.x,1,2), ",", str(V2.y,1,2), ",",str(V2.z,1,2),
-    " V3: ", str(V3.x,1,2), ",", str(V3.y,1,2), ",",str(V3.z,1,2))
-
-  #warning concat("XYZ ", str(X, 1, 4), " ", str(Y, 1, 4), " ", str(Z, 1, 4))
- 
-  disc {(V1+V2)/2 - P1/10000, P1, 0.1 pigment {rgb <1,0,0>}}
-  cylinder {(V1+V2)/2, (V1+V2)/2 + vnormalize(P1)/2, 0.01 pigment {rgb <1,0,0>}}
-  disc {(V2+V3)/2 - P2/10000, P2, 0.1 pigment {rgb <0,1,0>}}
-  cylinder {(V2+V3)/2, (V2+V3)/2 + vnormalize(P2)/2, 0.01 pigment {rgb <0,1,0>}}
-  disc {(V3+V1)/2 - P3/10000, P3, 0.1 pigment {rgb <0,0,1>}}
-  cylinder {(V3+V1)/2, (V3+V1)/2 + vnormalize(P3)/2, 0.01 pigment {rgb <0,0,1>}}
-  triangle {V1, C, V2}
-  triangle {V1, C, V3}
-  triangle {V2, C, V3}
-
-  sphere { <X, Y, Z>, R*1.001 pigment {rgb <0,0,0>}}
+    #warning concat("cornerball C:",
+      str(C.x,1,1), ",", str(C.y,1,1), ",",str(C.z,1,1),
+      " V1: ", str(V1.x,1,1), ",", str(V1.y,1,1), ",",str(V1.z,1,1),
+      " V2: ", str(V2.x,1,1), ",", str(V2.y,1,1), ",",str(V2.z,1,1),
+      " V3: ", str(V3.x,1,1), ",", str(V3.y,1,1), ",",str(V3.z,1,1)
+      )
   
-  // sphere {C+B, R/2 pigment {rgb <0,1,0>}}
-  #warning concat("XYZ ", str(X, 1, 4), " ", str(Y, 1, 4), " ", str(Z, 1, 4))
-  #else
+    intersection {plane {P1, D1} plane {P2, D2} plane {P3, D3}}
+  
+    #warning concat("P1:", str(P1.x,1,2), ",", str(P1.y,1,2), ",",str(P1.z,1,2), ",", str(D1, 1, 2))
+    #warning concat("P2:", str(P2.x,1,2), ",", str(P2.y,1,2), ",",str(P2.z,1,2), ",", str(D2, 1, 2))
+    #warning concat("P3:", str(P3.x,1,2), ",", str(P3.y,1,2), ",",str(P3.z,1,2), ",", str(D3, 1, 2))
+  
+    #warning concat("Det = ", str(Det, 1, 2), " C:",
+      str(C.x,1,2), ",", str(C.y,1,2), ",",str(C.z,1,2),
+      " V1: ", str(V1.x,1,2), ",", str(V1.y,1,2), ",",str(V1.z,1,2),
+      " V2: ", str(V2.x,1,2), ",", str(V2.y,1,2), ",",str(V2.z,1,2),
+      " V3: ", str(V3.x,1,2), ",", str(V3.y,1,2), ",",str(V3.z,1,2))
+  
+    #warning concat("XYZ ", str(X, 1, 4), " ", str(Y, 1, 4), " ", str(Z, 1, 4))
+   
+    disc {(V1+V2)/2 - P1/10000, P1, 0.1 pigment {rgb <1,0,0>}}
+    cylinder {(V1+V2)/2, (V1+V2)/2 + vnormalize(P1)/2, 0.01 pigment {rgb <1,0,0>}}
+    disc {(V2+V3)/2 - P2/10000, P2, 0.1 pigment {rgb <0,1,0>}}
+    cylinder {(V2+V3)/2, (V2+V3)/2 + vnormalize(P2)/2, 0.01 pigment {rgb <0,1,0>}}
+    disc {(V3+V1)/2 - P3/10000, P3, 0.1 pigment {rgb <0,0,1>}}
+    cylinder {(V3+V1)/2, (V3+V1)/2 + vnormalize(P3)/2, 0.01 pigment {rgb <0,0,1>}}
+    triangle {V1, C, V2}
+    triangle {V1, C, V3}
+    triangle {V2, C, V3}
+  
+    sphere { <X, Y, Z>, R*1.001 pigment {rgb <0,0,0>}}
+    
+    // sphere {C+B, R/2 pigment {rgb <0,1,0>}}
+    #warning concat("XYZ ", str(X, 1, 4), " ", str(Y, 1, 4), " ", str(Z, 1, 4))
   #end
   <X, Y, Z>
   
 #end
+
+//----------------------------------------------------------------------
+// Like cornerball, but using three planes instead of vectors.
+// Requires normalised plane vectors.
+#macro CornerballP (P1, D1,  P2, D2,  P3, D3)
+  #local Det=Matrix3determinatedV(P1, P2, P3);
+  #if (Det = 0)
+  # error concat("CornerballP Det = 0 ",
+    str(P1.x,1,2), ",", str(P1.y,1,2), ",",str(P1.z,1,2),
+    " V1: ", str(P2.x,1,2), ",", str(P2.y,1,2), ",",str(P2.z,1,2),
+    " V2: ", str(P3.x,1,2), ",", str(P3.y,1,2), ",",str(P3.z,1,2))
+  #end
+  <(Matrix3determinated(-D1,P1.y,P1.z, -D2,P2.y,P2.z, -D3,P3.y,P3.z) / -Det),
+   (Matrix3determinated(P1.x,-D1,P1.z, P2.x,-D2,P2.z, P3.x,-D3,P3.z) / -Det),
+   (Matrix3determinated(P1.x,P1.y,-D1, P2.x,P2.y,-D2, P3.x,P3.y,-D3) / -Det)>
+  
+#end  
 

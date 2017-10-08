@@ -3,7 +3,7 @@
 #include "stdafx.inc"
 #default {
   texture {
-    pigment { rgb 1 }
+    pigment { rgb <1,0.5,0> }
     //normal { bumps 1/20 scale 1/100 }
     finish { ambient 0.1 reflection 0.1 phong 1 }
   }
@@ -25,23 +25,24 @@ light_source { <8, 8, -40> rgb 1 }
 //}
 
 plane {y, 0
-        texture {
-              pigment{ color rgb <1,1,1 >*0.85 } 
-              finish { phong 1 reflection 0.4 } 
-        } // end of texture      
+  texture {
+    //pigment{ checker color rgb <1,1,1>, color rgb <0.3,0.3,0.3> }
+    pigment{ color rgb <1,1,1> }
+    finish { phong 1 reflection 0.4 } 
+  }
 }  
 
 // #declare CHEAP=1;
 #declare DEBUG=1;
 #include "hexdron.inc"
 
-#local TLF=<1, 2, 1>;
+#local TLF=<1.5, 2, 1>;
 #local TLR=<1, 2, 2>;
-#local TRR=<2, 2, 2>;
-#local TRF=<2, 2, 1>;
-#local BLF=<0, 1, 1>;
-#local BLR=<1, 1, 2>;
-#local BRR=<2, 1, 2>;
+#local TRR=<3, 2, 2>;
+#local TRF=<2.5, 2, 1>;
+#local BLF=<0.5, 1, 1>;
+#local BLR=<0, 1, 2>;
+#local BRR=<2.5, 1, 2>;
 #local BRF=<2, 1, 1>;
 
 union {
@@ -58,20 +59,24 @@ union {
   cylinder{TRR, TLR, 1/100} cylinder{TLF, TLR, 1/100}
   cylinder{TRR, TRF, 1/100} cylinder{TRF, TLF, 1/100}
 
-  #local R=0.100;
+  #local R=0.05;
   
   //cornerball(BLF, BLR, TLF, BRF, R)
   //cornerball(TLF, TLR, TRF, BLF, R)
   //cornerball(TLF, TRF, BLF, TLR, R)
 
-    hexdron2(TLF, TLR, TRR, TRF,  BLF, BLR, BRR, BRF, R, 0)
+    difference {
+    _hexdron2(TLF, TLR, TRR, TRF,  BLF, BLR, BRR, BRF, R,)
+    cylinder {<1.5,1.5,-10>, <1.5,1.5,10>, 0.1}
+    sphere {1, 0.5}
+    }
 
   translate <-1, -1, -1>
   //rotate <50, -30, 0>
-  rotate <0, -70, 0>
-  rotate <-10, 0, 0>
+  rotate <0, -0, 0>
+  rotate <-20, 0, 0>
   texture {
-    pigment {rgbf <1, 1, 1, 0.5>}
+    pigment {rgbf <1, 0.5, 0, 0>}
     finish { ambient 0.1 reflection 0.0 specular 0.1 roughness 0.0001}
   }
   translate y
