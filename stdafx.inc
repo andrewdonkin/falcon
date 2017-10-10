@@ -50,4 +50,15 @@
  (vnormalize(<A, B, C>), D)
 #end
 
+// Interpolate author: Margus Ramst
+// Returns 1 when X=0, <1 as abs(X) increases, reaching 0 at X=1.
+#declare Softly = function(X, GS, GE, TS, TE) {
+  (TS+(TE-TS) * ((1 - cos( min((X-GS)/(GE-GS), 1) * pi)) /2 ) )
+  //(TS+(TE-TS) * min((X-GS)/(GE-GS), 1))
+}
+
+// Returns 1 when X=0, <1 as abs(X) increases.  Reaches 0 when X=ZeroAtHere.
+//  #declare OneAtZero = function(X, Power) {1 / (Power * (abs(X)+ 1/Power)) }
+#declare OneAtZero = function(X, ZeroAtHere) {Softly(abs(X)/ZeroAtHere, 0, 1, 1, 0)}
+
 #end
