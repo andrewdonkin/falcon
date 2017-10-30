@@ -1,15 +1,16 @@
 #version 3.7;
+#include "stdafx.inc"
 #default {
   texture {
     pigment { rgb 1 }
     normal { bumps 0.07 scale 0.1}
-    finish { ambient 0.1 }
+    finish { ambient 0.1 specular 1 roughness 0.01 reflection 0.01}
   }
 }
 
 
 camera { location <0, 10, -15> look_at <1.4, 0, 5> angle 20}
-camera { location <0, 10, -15> look_at <2, 0, 1> angle 9}
+//camera { location <0, 10, -15> look_at <2, 0, 1> angle 9}
 //camera { location <8, 8, -15> look_at <1.5, 0, 0.7> angle 5} // spirals
 
 
@@ -123,13 +124,13 @@ plumb_ssweep_n(0, 2.2, 3, 0.2, 0.2)
 
 plumb_start_n(2, 0.1)
 plumb_transform_n(0, transform{translate<2.8, 0, 0>})
-plumb_transform_n(1, transform{translate<3.1, 0, -1>})
+plumb_transform_n(1, transform{translate<3.1, 0, 0>})
 
 plumb_spiral_start_n(1, 0.2, 0.1)
 plumb_spiral_n(1, 0.6, 1, 0.1, 0.0)
 plumb_spiral_finish_n(1, 0.2, 0.1)
 
-plumb_tube_n(0, 0.2)
+plumb_tube_n(0, 1.2)
 plumb_splines_n(0, -0.22, 18, 1.5, 0)
 plumb_tube_n(0, 0.3)
 //plumb_tube_n(1, 0.5)
@@ -156,6 +157,16 @@ plumb_left_n(0, 0.5, 90)
 
 plumb_radstep_n(0, 0.1, 0, "n")
 plumb_tube_n(0,0.22)
+
+//-----------------------------
+
+union {
+  object {plumb_marshmallow}
+  Zcyl(<0, 1.5, 0>, -10, 1)
+  scale 0.1
+  rotate 45*y
+  translate <1.4, 0, 5>
+}
 
 
 #if (0)

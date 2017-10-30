@@ -1,13 +1,13 @@
-#ifndef(stdafx_inc)
+#ifndef(Stdafx_inc)
 // The name was a joke; now I am regretting it
-#declare stdafx_inc = 1;
+#declare Stdafx_inc = 1;
 
 #version 3.7;
 
 #declare Eps=0.000001;
-#macro ycyl(O, Height, R) cylinder{O, O+y*Height, R} #end
-#macro xcyl(O, Width, R) cylinder{O, O+x*Width, R} #end
-#macro zcyl(O, Len, R) cylinder{O, O+z*Len, R} #end
+#macro Ycyl(O, Height, R) cylinder{O, O+y*Height, R} #end
+#macro Xcyl(O, Width, R) cylinder{O, O+x*Width, R} #end
+#macro Zcyl(O, Len, R) cylinder{O, O+z*Len, R} #end
 
 // Thanks to Vince, Geometry for Computer Graphics, page 60.
 // Returns a normalised vector, since that equation expects one.
@@ -51,7 +51,6 @@
 #end
 
 // Interpolate author: Margus Ramst
-// Returns 1 when X=0, <1 as abs(X) increases, reaching 0 at X=1.
 #declare Softly = function(X, GS, GE, TS, TE) {
   (TS+(TE-TS) * ((1 - cos( min((X-GS)/(GE-GS), 1) * pi)) /2 ) )
   //(TS+(TE-TS) * min((X-GS)/(GE-GS), 1))
