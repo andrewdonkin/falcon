@@ -1,4 +1,3 @@
-#include "shapes3.inc" // f_rounded_box()
 #include "skirtbox.inc"
 
 global_settings {
@@ -46,103 +45,70 @@ union {
     }}
 }
 
-// one way of merging a block into the plane
-#macro skirted_box2(Box
-                    , Rbox  //
-                    , skirting // (0, 1].  1 is good.  Smaller=tighter
-                    )
-  #local Boxx=Box.x; // functions don't like vectors.
-  #local Boxy=Box.y;
-  #local Boxz=Box.z;
-  isosurface  {
-    function {
-      (1+0.001)
-       - pow(0.0001, f_rounded_box(x-Boxx/2,y,z-Boxz/2, Rbox, Boxx/2, Boxy/2, Boxz/2)
-       //-f_superellipsoid(x*2-Boxx, y*2, z*2-Boxz,0.08, 0.08)
-       )
-       - pow(0.00001 * skirting, (y+Boxy/20))
-    }
-    contained_by {box {<-Boxy/3, 0, -Boxy/3>,
-                       <Boxx+Boxy/3, Boxy/2, Boxz+Boxy/3>}}
-    evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
-    accuracy 0.001*Rbox // default is fine until you stitch them together
-  }
-#end
+union {
+  object {Skirted_box2(<1, 1, 1>, 0.03, 1)} // origin to <1,1,1>
+  object {Skirted_box_y(<-0.4, 0.5, -0.4>, <0.4, 0.55, 0.4>,
+    0.1, 0.02, 0.01, 0)} // big rad, top rad, skirt rad, filled
+  object {Skirted_box_y(<-0.2, 0.5, -0.2>, <0.2, 0.6, 0.2>,
+    0.15, 0.01, 0.01, 1) rotate 20*y} // big rad, top rad, skirt rad, filled
+  texture { floor_tex}
 
-object {
-  skirted_box2(<1, 1, 1>, 0.03, 1)
-  translate <0.25, 0, 0>
-  texture { pigment { checker color rgb 0.2, colour rgb <1,1,1> }}
+  translate <0.75, 0, 0.5>
+  texture { floor_tex}
+//  texture { pigment { checker color rgb 0.2, colour rgb <1,1,1> }}
 }
 
-// another way: smooth transient between the plane and the box skirting
-#macro skirted_box(Box                 // 3-vector of box dimensions
-                   , Rbox          // radius of box's edges
-                   , R)           // radius of skirting
-  #local Boxx=Box.x; // functions don't like vectors.
-  #local Boxy=Box.y;
-  #local Boxz=Box.z;
-  union {
-    isosurface  {
-      function {f_rounded_box(x-Boxx/2,y,z-Boxz/2, Rbox, Boxx/2, Boxy/2, Boxz/2)
-        // + f_noise3d(x*10, y*20, z*20)/40
-        }
-      contained_by {box {<0, 0, 0>,
-                         <Boxx, Boxy/2, Boxz>}}
-      evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
-      accuracy 0.000001
-    }
-    difference {
-      merge {
-        // these four cylinders lying at the base of the box
-        // will get another cylinder subtracted later
-        // to form a radiused skirting.
-        cylinder {<Rbox, 0, 0>, <Boxx-Rbox, 0, 0>, R} // near
-        cylinder {<0, 0, Rbox>, <0, 0, Boxz-Rbox>, R} //left 
-        cylinder {<Rbox, 0, Boxz>, <Boxx-Rbox, 0, Boxz>, R} // rear
-        cylinder {<Boxx, 0, Rbox>, <Boxx, 0, Boxz-Rbox>, R} // right
-        
-        // these four hockey pucks will have quarter of a torus taken out of them
-        cylinder {<+Rbox, 0, Rbox>, <Rbox, R, Rbox>, R+Rbox} // near left
-        cylinder {<Boxx-Rbox,  0, Rbox>, <Boxx-Rbox,  R, Rbox>, R+Rbox} // near right
-        cylinder {<+Rbox, 0,  Boxz-Rbox>, <+Rbox, R,  Boxz-Rbox>, R+Rbox} // far left
-        cylinder {<Boxx-Rbox,  0,  Boxz-Rbox>, <Boxx-Rbox,  R,  Boxz-Rbox>, R+Rbox} // far right
-      }
-      cylinder {<0, R, -R>, <Boxx, R, -R>, R} // near
-      cylinder {<-R, R, -Boxz>, <-R, R, Boxz>, R} // left
-      cylinder {<0, R, Boxz+R>, <Boxx, R, Boxz+R>, R} // rear
-      cylinder {<Boxx+R, R, -Boxz>, <Boxx+R, R, Boxz+R>, R} //right
-      object {Segment_of_Torus(R+Rbox, R, 90) rotate 90*y translate <Rbox, R, Rbox> } // near left
-      object {Segment_of_Torus(R+Rbox, R, 90) translate <Boxx-Rbox, R, Rbox> } // near right
-      object {Segment_of_Torus(R+Rbox, R, 90) rotate 180*y translate <Rbox, R, Boxz-Rbox> } // far left
-      object {Segment_of_Torus(R+Rbox, R, -90) translate <Boxx-Rbox, R, Boxz-Rbox> } // far right
-    }
-  }
-#end
-
 object {
-  skirted_box(<1, 1, 1>, 0.03, 0.02)
+  Skirted_box(<1, 1, 1>, 0.03, 0.1)
   translate <1.5, 0, 0>
-  texture { pigment { checker color rgb 0.2, colour rgb <1,1,1> }}
+  texture { floor_tex}
+//  texture { pigment { checker color rgb 0.2, colour rgb <1,1,1> }}
   }
 
+// hollow, to form a wall around another
 object {
-  skirted_box_y(<0, 0, -1>, <1, 0.4, -0.5>,
+  Skirted_box_y(<-0.1, 0, -1.1>, <0.9, 0.4, -0.6>,
     0.2, 0.03, 0.02, 0) // big rad, top rad, skirt rad, filled
   texture { floor_tex}
 }
+object { // solid, inside the wall
+  Skirted_box_y(<0.1, 0, -1>, <0.7, 0.4, -0.7>,
+    0.1, 0.03, 0.02, 1) // big rad, top rad, skirt rad, filled
+  texture { floor_tex}
+}
+object { // half a sausage sitting on top
+  Skirted_blister(0.3, // Z length
+  0.05, 0.01 // large and skirting radii
+   )
+  rotate 100*y
+  translate <0.25, 0.4, -0.85>
+  texture { floor_tex }
+}
+
+
 
 object {
-  skirted_lozenge_y(1, 0.5, 0.2, // end rad
+  Skirted_lozenge_y(1, 0.5, 0.2, // end rad
     0.03, // top rad
     0.02, // skirt
     0) // filled
   rotate 90*y
-  translate <1.5, 0, -0.5>
+  translate <1.9, 0, -0.5>
   texture { floor_tex }
 }
 object {
-  skirted_blister(1, // Z length
+  Skirted_lozenge_y(0.7, 0.5, 0.1, // end rad
+    0.03, // top rad
+    0.02, // skirt
+    1) // filled
+  rotate 90*y
+  translate <2.1, 0, -0.5>
+  texture { floor_tex }
+}
+
+
+object {
+  Skirted_blister(1, // Z length
   0.4, 0.2 // large and skirting radii
    )
   rotate 90*y
