@@ -192,7 +192,7 @@ object{ skirted_lozenge_y (
                       1.5, 0.4, // length (Z), top
                       0.18, 0.04, // big end radius, smaller top radius
                       0.02, // skirting
-                      1 // Y_Filled___On,
+                      0 // Y_Filled___On,
                     ) //----------------------------------------
         texture {
               pigment{ color rgb <1,1,1 >*0.85 } 

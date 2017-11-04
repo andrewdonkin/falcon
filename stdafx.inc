@@ -1,10 +1,15 @@
 #ifndef(Stdafx_inc)
-// The name was a joke; now I am regretting it
+// The name was a bad joke.
 #declare Stdafx_inc = 1;
 
 #version 3.7;
 
 #declare Eps=0.000001;
+
+#declare RandSeed=seed(1);
+
+#macro Rand(PlusOrMinus) ((rand(RandSeed) - 0.5) * PlusOrMinus * 2) #end
+  
 #macro Ycyl(O, Height, R) cylinder{O, O+y*Height, R} #end
 #macro Xcyl(O, Width, R) cylinder{O, O+x*Width, R} #end
 #macro Zcyl(O, Len, R) cylinder{O, O+z*Len, R} #end

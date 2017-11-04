@@ -72,8 +72,7 @@ union {
 //  }
 
   #local Rand1=rand(Bash_seed);
-  #local Crack = function {-pow(f_crackle(x*3,y*3,z*3), 19)
-                  };
+  #local Crack = function {-pow(f_crackle(x*3,y*3,z*3), 19)};
 
   union {
     //disc {<0, 0.1, 0>, y, 1.2, 1}
