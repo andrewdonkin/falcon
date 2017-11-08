@@ -1,8 +1,8 @@
 #ifndef(Stdafx_inc)
+#version 3.7;
 // The name was a bad joke.
 #declare Stdafx_inc = 1;
 
-#version 3.7;
 
 #declare Eps=0.000001;
 
@@ -58,9 +58,20 @@
 // Interpolate author: Margus Ramst
 #declare Softly = function(X, GS, GE, TS, TE) {
   (TS+(TE-TS) * ((1 - cos( min((X-GS)/(GE-GS), 1) * pi)) /2 ) )
-  //(TS+(TE-TS) * min((X-GS)/(GE-GS), 1))
+  //(TS+(TE-TS) * min((X-GS)/(GE-GS), 1)) // linear
 }
-
+#declare SoftlyBinary = function(X, GS, GE, TS, TE, Power) {
+  select(X-GS, TS, TS,
+    select(X-GE,
+      select(X-(GE-GS)/2,
+        pow(2*(X-GS)/(GE-GS), Power),           // in < 0.5
+        2-pow(2*(1-(X-GS)/(GE-GS)), Power)      // in >= 0.5
+      ) / 2 * (TE-TS) + TS
+      , TE
+    )
+  )
+}
+  
 // Returns 1 when X=0, <1 as abs(X) increases.  Reaches 0 when X=ZeroAtHere.
 //  #declare OneAtZero = function(X, Power) {1 / (Power * (abs(X)+ 1/Power)) }
 #declare OneAtZero = function(X, ZeroAtHere) {Softly(abs(X)/ZeroAtHere, 0, 1, 1, 0)}
