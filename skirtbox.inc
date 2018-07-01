@@ -50,9 +50,10 @@
 // Another way: smooth transient between the plane and the box skirting
 // using a the inside of a torus as a skirting.
 // bounded_by {box {0, Box}}
-#macro Skirted_box(Box                 // 3-vector of box dimensions
+#macro Skirted_box(Box             // 3-vector of box dimensions
                    , Rbox          // radius of box's edges
-                   , R)           // radius of skirting
+                   , R             // radius of skirting
+                   , optional Rot) // rotate around <Box.x/2, 0, Box.z/2>
   #local Boxx=Box.x - 2 * R; // functions don't like vectors.
   #local Boxy=Box.y;
   #local Boxz=Box.z - 2 * R;
@@ -92,6 +93,13 @@
       object {Segment_of_Torus(R+Rbox, R, 90) rotate 180*y translate <R+Rbox, R, Box.z-R-Rbox> } // rear left
       object {Segment_of_Torus(R+Rbox, R, -90)             translate <Box.x-Rbox-R, R, Box.z-R-Rbox> } // rear right
     }
+    #ifdef(Rot)
+        transform {
+            translate <-Box.x/2, 0, -Box.z/2>
+            rotate Rot
+            translate <Box.x/2, 0, Box.z/2>
+        }
+    #end
   }
 #end
 
@@ -293,6 +301,7 @@
 
 
 // This object is centred on x=0
+// Bounded by <-End_Radius - Rskirt, 0, -Rskirt>, <End_Radius + Rskirt, Y, Z + Rskirt>
 // ############################################################################
 // ############################################################################
 // ############################################################################

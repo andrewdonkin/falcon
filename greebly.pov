@@ -1,5 +1,6 @@
-#version 3.7;
+#version 3.8;
 #include "skirtbox.inc"
+#include "stdafx.inc"
 #include "shapes3.inc" // segment_of_torus
 
 global_settings {
@@ -40,7 +41,7 @@ union {
   texture { pigment { color rgb<1,1,0> }}
 }
 
-#if (0)
+#if (1)
 union {
   object {Skirted_box2(<1, 1, 1>, 0.03, 1)} // origin to <1,1,1>
   object {Skirted_box_y(<-0.4, 0.5, -0.4>, <0.4, 0.55, 0.4>,
@@ -55,17 +56,25 @@ union {
 }
 #end
 
+// These two should be identical
 object {
-  Skirted_box(<1, 0.5, 1>, 0.03, 0.1)
+  Skirted_box(<0.7, 0.5, 1>, 0.03, 0.1, 0*y)
   translate <1.5, 0, 0>
   texture { floor_tex}
 //  texture { pigment { checker color rgb 0.2, colour rgb <1,1,1> }}
   }
+object {
+  Skirted_box_y(o, <0.5, 0.5, 0.8>, 0.03, 0.03, 0.1, 1)
+  translate <2.5, 0, 0.1>
+  texture { floor_tex}
+//  texture { pigment { checker color rgb 0.2, colour rgb <1,1,1> }}
+  }
 
-#if (0)
+
+#if (1)
 // hollow, to form a wall around another
 object {
-  Skirted_box_y(<-0.1, 0, -1.1>, <0.9, 0.4, -0.6>,
+  Skirted_box_y(<-0.1, 0, -1.1>, <0.9, 0.3, -0.6>,
     0.2, 0.03, 0.02, 0) // big rad, top rad, skirt rad, filled
   texture { floor_tex}
 }
@@ -86,21 +95,22 @@ object { // half a sausage sitting on top
 
 
 object {
-  Skirted_lozenge_y(1, 0.5, 0.2, // end rad
+  Skirted_lozenge_y(1, 0.25,  // z, y
+    0.2, // end rad
     0.03, // top rad
     0.02, // skirt
     0) // filled
   rotate 90*y
-  translate <1.9, 0, -0.5>
+  translate <1.5, 0, -0.8000001>
   texture { floor_tex }
 }
 object {
-  Skirted_lozenge_y(0.7, 0.5, 0.1, // end rad
+  Skirted_lozenge_y(0.7, 0.25, 0.1, // end rad
     0.03, // top rad
     0.02, // skirt
     1) // filled
   rotate 90*y
-  translate <2.1, 0, -0.5>
+  translate <1.5, 0, -0.8>
   texture { floor_tex }
 }
 
@@ -110,7 +120,7 @@ object {
   0.4, 0.2 // large and skirting radii
    )
   rotate 90*y
-  translate <1, 0, -1>
+  translate <1, 0, -1.5>
   texture { floor_tex }
 }
 #end
@@ -137,4 +147,5 @@ light_source { <2, 1.5, -2> rgb 1
 #end
 
 camera { location <-0.1, 3, -4> look_at <1.2, 0, 0> angle 40}
+//camera { location <0.1, 3, -4> look_at <2.5, 0, 0.5> angle 40}
 //camera { location <-0.1, 3, -4> look_at <2, 0, -0.9> angle 5}
