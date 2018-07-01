@@ -1,7 +1,9 @@
+#version 3.7;
 #include "skirtbox.inc"
+#include "shapes3.inc" // segment_of_torus
 
 global_settings {
-  ambient_light 0  radiosity {  }
+  ambient_light 0 //radiosity {  }
   // max_trace_level 200
   assumed_gamma 1
 }
@@ -31,20 +33,14 @@ union {// a few stakes
   translate -(bigrad - 1) * y
   texture { pigment { color rgb<1,1,0> }}
 }
-
-
 union {
   sphere {0, thick translate <0, thick, 0>}
-  cylinder {0, z, thick
-    translate <0, 0, 1>}
-
+  cylinder {0, z, thick translate <0, 0, 1>}
   object{ Segment_of_Torus(1, thick, -45) rotate <0,90,0> translate <thick, 0, 1> rotate <0,0,90>}
-
-  texture { pigment { 
-   color rgb<1,1,0> 
-    }}
+  texture { pigment { color rgb<1,1,0> }}
 }
 
+#if (0)
 union {
   object {Skirted_box2(<1, 1, 1>, 0.03, 1)} // origin to <1,1,1>
   object {Skirted_box_y(<-0.4, 0.5, -0.4>, <0.4, 0.55, 0.4>,
@@ -57,14 +53,16 @@ union {
   texture { floor_tex}
 //  texture { pigment { checker color rgb 0.2, colour rgb <1,1,1> }}
 }
+#end
 
 object {
-  Skirted_box(<1, 1, 1>, 0.03, 0.1)
+  Skirted_box(<1, 0.5, 1>, 0.03, 0.1)
   translate <1.5, 0, 0>
   texture { floor_tex}
 //  texture { pigment { checker color rgb 0.2, colour rgb <1,1,1> }}
   }
 
+#if (0)
 // hollow, to form a wall around another
 object {
   Skirted_box_y(<-0.1, 0, -1.1>, <0.9, 0.4, -0.6>,
@@ -115,18 +113,19 @@ object {
   translate <1, 0, -1>
   texture { floor_tex }
 }
+#end
 
 #if (1)
 light_source {
   <0,0,0>             // light's position (translated below)
   color rgb 1.0       // light's color
-  area_light
-  <0.4, 0, 0> <0, 0.4, 0>
-  18, 18
-  adaptive 1          // 0,1,2,3...
-  jitter              // adds random softening of light
-  circular            // make the shape of the light circular
-   orient              // orient light
+//  area_light
+//  <0.4, 0, 0> <0, 0.4, 0>
+//  18, 18
+//  adaptive 1          // 0,1,2,3...
+//  jitter              // adds random softening of light
+//  circular            // make the shape of the light circular
+//   orient              // orient light
   //  looks_like {sphere {0, 0.1 texture {pigment {color rgb <1,1,1>}} finish { ambient 1 diffuse 1 }}}
   translate <2, 1.5, -2>
 }
@@ -137,5 +136,5 @@ light_source { <2, 1.5, -2> rgb 1
 }
 #end
 
-camera { location <-0.1, 3, -4> look_at <1, 0, -0.5> angle 40}
+camera { location <-0.1, 3, -4> look_at <1.2, 0, 0> angle 40}
 //camera { location <-0.1, 3, -4> look_at <2, 0, -0.9> angle 5}

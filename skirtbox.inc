@@ -20,6 +20,10 @@
 // ############################################################################
 // One way of merging a block into the plane by swelling it as it nears y=0.
 // It is not perfectly continuous - see skirted_box for that.
+// Centred on the origin, only goes to half of Box.y.
+// Containing box unnecessarily big for Rbox < 1.
+// Really slow.
+// For these reasons, don't use it.
 #macro Skirted_box2(Box
                     , Rbox  //
                     , skirting // (0, 1].  1 is biggish, 0.1 good, 0.01 quite tight.
@@ -33,7 +37,8 @@
         - pow(0.01, f_rounded_box(x,y,z, Rbox, Boxx/2, Boxy/2, Boxz/2))
         - pow(0.01, (y+Boxy/20)*Boxy*3)
     }
-    contained_by {box {<-Boxx/1.1, 0, -Boxz/1.1>,
+    // centred on origin, spanning
+    contained_by {box {<-Boxx/1.1, -Boxy/2, -Boxz/1.1>,
                        <Boxx/1.1, Boxy/2, Boxz/1.1>}}
     evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
     accuracy 0.001*Rbox // default is fine until you stitch them together
@@ -45,21 +50,23 @@
 // ############################################################################
 // Another way: smooth transient between the plane and the box skirting
 // using a the inside of a torus as a skirting.
+// bounded_by {box {<-R, 0, -R>, Box + <R, 0, R>}}
 #macro Skirted_box(Box                 // 3-vector of box dimensions
                    , Rbox          // radius of box's edges
                    , R)           // radius of skirting
-  #local Boxx=Box.x; // functions don't like vectors.
+  #local Boxx=Box.x - 2 * R; // functions don't like vectors.
   #local Boxy=Box.y;
-  #local Boxz=Box.z;
+  #local Boxz=Box.z - 2 * R;
   union {
     isosurface  {
-      function {f_rounded_box(x-Boxx/2,y,z-Boxz/2, Rbox, Boxx/2, Boxy/2, Boxz/2)
+      function {f_rounded_box(x-Boxx/2, y-Boxy/2, z-Boxz/2, Rbox, Boxx/2, Boxy/2, Boxz/2)
         // + f_noise3d(x*10, y*20, z*20)/40
         }
       contained_by {box {<0, 0, 0>,
-                         <Boxx, Boxy/2, Boxz>}}
+                         <Boxx, Boxy, Boxz>}}
       evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
       accuracy 0.000001
+      translate <R, 0, R>
     }
     difference {
       merge {
@@ -78,7 +85,7 @@
         cylinder {<Boxx-Rbox,  0,  Boxz-Rbox>, <Boxx-Rbox,  R,  Boxz-Rbox>, R+Rbox} // far right
       }
       cylinder {<0, R, -R>, <Boxx, R, -R>, R} // near
-      cylinder {<-R, R, -Boxz>, <-R, R, Boxz>, R} // left
+      cylinder {<-R, R, 0>, <-R, R, Boxz>, R} // left
       cylinder {<0, R, Boxz+R>, <Boxx, R, Boxz+R>, R} // rear
       cylinder {<Boxx+R, R, -Boxz>, <Boxx+R, R, Boxz+R>, R} //right
       object {Segment_of_Torus(R+Rbox, R, 90) rotate 90*y translate <Rbox, R, Rbox> } // near left
@@ -178,22 +185,23 @@
     #end
 
           cylinder{ <P1.x+Rmaj-D, P1.y       , P1.z+Rmaj>,
-            <P1.x+Rmaj-D, P2.y-Rmin+D, P1.z+Rmaj>, Rmaj} 
+                    <P1.x+Rmaj-D, P2.y-Rmin+D, P1.z+Rmaj>, Rmaj} 
           cylinder{ <P1.x+Rmaj-D, P1.y       , P2.z-Rmaj>,
-            <P1.x+Rmaj-D, P2.y-Rmin+D, P2.z-Rmaj>, Rmaj} 
+                    <P1.x+Rmaj-D, P2.y-Rmin+D, P2.z-Rmaj>, Rmaj} 
           
-          cylinder{ <P2.x-Rmaj, P1.y       , P1.z+Rmaj>,
-            <P2.x-Rmaj, P2.y-Rmin+D, P1.z+Rmaj>, Rmaj} 
-          cylinder{ <P2.x-Rmaj, P1.y       , P2.z-Rmaj>,
-            <P2.x-Rmaj, P2.y-Rmin+D, P2.z-Rmaj>, Rmaj} 
+          cylinder{ <P2.x-Rmaj  , P1.y       , P1.z+Rmaj>,
+                    <P2.x-Rmaj  , P2.y-Rmin+D, P1.z+Rmaj>, Rmaj} 
+          cylinder{ <P2.x-Rmaj  , P1.y       , P2.z-Rmaj>,
+                    <P2.x-Rmaj  , P2.y-Rmin+D, P2.z-Rmaj>, Rmaj} 
 
-          box{ P1+< Rmaj, 0 , 0 >, P2 - <Rmaj, Rmin, 0 >} //  z
-          box{ P1+<0, 0, Rmaj>, P2 - <0, Rmin, Rmaj>} //  x
+          box{ P1+< Rmaj, 0 , 0 >, P2 - <Rmaj, Rmin, 0 >} // z: narrow and deep
+          box{ P1+<0, 0, Rmaj>,    P2 - <0, Rmin, Rmaj>}  // x: wide and shallow
 
           #if (Y_Filled___On = 1)
 
-            box{ P1+< Rmaj-D, 0    , Rmin  >,P2+<-Rmaj+D,-D    ,-Rmin  >} //  z
-            box{ P1+< Rmin, 0    , Rmaj  >, P2 -<Rmin, 0 , Rmaj  >} //  x
+            // full-height boxes.
+            box{ P1+< Rmaj-D, 0, Rmin >, P2 + <-Rmaj+D, -D, -Rmin >} // z: narrow and deep
+            box{ P1+< Rmin  , 0, Rmaj >, P2 - <Rmin,    0 ,  Rmaj >} //  x: wide and shallow
 
             cylinder { <P1.x+Rmaj, P1.y, P1.z+Rmaj>, <P1.x + Rmaj, P2.y, P1.z + Rmaj>, Rmaj-Rmin} // FL
             cylinder { <P2.x-Rmaj, P1.y, P1.z+Rmaj>, <P2.x - Rmaj, P2.y, P1.z + Rmaj>, Rmaj-Rmin} // FR
@@ -204,20 +212,21 @@
 
         } // employment contracts (the end of the union)
 
-            // subtract four small cylinders
+            // subtract four small cylinders.
+            // the wall thickness is double Rmin
             cylinder{ <P1.x+Rmaj, P1.y-D, P1.z+Rmaj>,
-              <P1.x+Rmaj, P2.y+D, P1.z+Rmaj>, Rmaj-2*Rmin} 
+                      <P1.x+Rmaj, P2.y+D, P1.z+Rmaj>, Rmaj-2*Rmin} 
             cylinder{ <P1.x+Rmaj, P1.y-D, P2.z-Rmaj>,
-              <P1.x+Rmaj, P2.y+D, P2.z-Rmaj>, Rmaj-2*Rmin} 
+                      <P1.x+Rmaj, P2.y+D, P2.z-Rmaj>, Rmaj-2*Rmin} 
             
             cylinder{ <P2.x-Rmaj, P1.y-D, P1.z+Rmaj>,
-              <P2.x-Rmaj, P2.y+D, P1.z+Rmaj>, Rmaj-2*Rmin} 
+                      <P2.x-Rmaj, P2.y+D, P1.z+Rmaj>, Rmaj-2*Rmin} 
             cylinder{ <P2.x-Rmaj, P1.y-D, P2.z-Rmaj>,
-              <P2.x-Rmaj, P2.y+D, P2.z-Rmaj>, Rmaj-2*Rmin} 
+                      <P2.x-Rmaj, P2.y+D, P2.z-Rmaj>, Rmaj-2*Rmin} 
 
             // subtract the bulk of the interior
-            box{ P1+< Rmin*2  , -D    , Rmaj>, P2+<-Rmin*2  , +D    ,-Rmaj> } //  x
-            box{ P1+< Rmaj, -D, Rmin*2  >,P2+<-Rmaj+D,-D    ,-Rmin*2  >} //  z
+            box{ P1+< Rmin*2, -D, Rmaj  >, P2+<-Rmin*2, +D, -Rmaj   >} //  x: wide
+            box{ P1+< Rmaj  , -D, Rmin*2>, P2+<-Rmaj+D, -D, -Rmin*2 >} //  z: deep
 
       } // end our differences
           #end //hollow

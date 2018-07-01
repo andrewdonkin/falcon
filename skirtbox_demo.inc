@@ -174,7 +174,7 @@ plane { <0,1,0>, 0    // plane with layered textures
 //---------------------------------------------------------------------------------------
 #include "skirtbox.inc"
 //---------------------------------------------------------------------------------------
-object{ skirted_box_y ( <-0.1,0.1,0.0>, <-0.9 ,0.5, 1.5>,  // Point_1, Point_2 of outline box
+object{ Skirted_box_y ( <-0.1,0.1,0.0>, <-0.9 ,0.5, 1.5>,  // Point_1, Point_2 of outline box
                       0.180, // Border_Radius_Big,  // big radius of vertical borders
                       0.040, // Border_Radius_Small,// small radíus of horizontal borders
                       0.02, //skirt radius
@@ -188,7 +188,7 @@ object{ skirted_box_y ( <-0.1,0.1,0.0>, <-0.9 ,0.5, 1.5>,  // Point_1, Point_2 o
   }//------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------
 
-object{ skirted_lozenge_y (
+object{ Skirted_lozenge_y (
                       1.5, 0.4, // length (Z), top
                       0.18, 0.04, // big end radius, smaller top radius
                       0.02, // skirting
@@ -201,7 +201,7 @@ object{ skirted_lozenge_y (
        scale<1,1,1>  rotate< 0,0,0> translate <0.5,0.1,0.0>
   }//------------------------------------------------------------------------------------
 
-object {skirted_blister (1, 0.4, 0.2)
+object {Skirted_blister (1, 0.4, 0.2)
         texture {
               pigment{ color rgb <1,1,1 >*0.85 } 
               finish { phong 1 reflection 0.1 } 
