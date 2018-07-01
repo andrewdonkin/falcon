@@ -14,7 +14,6 @@
 #ifndef (Skirtbox_inc)
 #declare Skirtbox_inc = version;
 
-
 // ############################################################################
 // ############################################################################
 // ############################################################################
@@ -50,7 +49,7 @@
 // ############################################################################
 // Another way: smooth transient between the plane and the box skirting
 // using a the inside of a torus as a skirting.
-// bounded_by {box {<-R, 0, -R>, Box + <R, 0, R>}}
+// bounded_by {box {0, Box}}
 #macro Skirted_box(Box                 // 3-vector of box dimensions
                    , Rbox          // radius of box's edges
                    , R)           // radius of skirting
@@ -73,25 +72,25 @@
         // these four cylinders lying at the base of the box
         // will get another cylinder subtracted later
         // to form a radiused skirting.
-        cylinder {<Rbox, 0, 0>, <Boxx-Rbox, 0, 0>, R} // near
-        cylinder {<0, 0, Rbox>, <0, 0, Boxz-Rbox>, R} //left 
-        cylinder {<Rbox, 0, Boxz>, <Boxx-Rbox, 0, Boxz>, R} // rear
-        cylinder {<Boxx, 0, Rbox>, <Boxx, 0, Boxz-Rbox>, R} // right
+        Xcyl(<R+Rbox, 0, R>, Box.x - 2*(R+Rbox), R) // near
+        Zcyl(<R, 0, R+Rbox>, Box.z - 2*(R+Rbox), R) // left 
+        Xcyl(<R+Rbox, 0, Box.z-R>, Box.x - 2*(R+Rbox), R) // rear
+        Zcyl(<Box.x-R, 0, R+Rbox>, Box.z - 2*(R+Rbox), R) // right
         
         // these four hockey pucks will have quarter of a torus taken out of them
-        cylinder {<+Rbox, 0, Rbox>, <Rbox, R, Rbox>, R+Rbox} // near left
-        cylinder {<Boxx-Rbox,  0, Rbox>, <Boxx-Rbox,  R, Rbox>, R+Rbox} // near right
-        cylinder {<+Rbox, 0,  Boxz-Rbox>, <+Rbox, R,  Boxz-Rbox>, R+Rbox} // far left
-        cylinder {<Boxx-Rbox,  0,  Boxz-Rbox>, <Boxx-Rbox,  R,  Boxz-Rbox>, R+Rbox} // far right
+        Ycyl(<R+Rbox,       0, Rbox+R>,       R, R+Rbox) // front left
+        Ycyl(<Box.x-Rbox-R, 0, Rbox+R>,       R, R+Rbox) // front right
+        Ycyl(<R+Rbox,       0, Box.z-Rbox-R>, R, R+Rbox) // rear left
+        Ycyl(<Box.x-Rbox-R, 0, Box.z-Rbox-R>, R, R+Rbox) // rear right
       }
-      cylinder {<0, R, -R>, <Boxx, R, -R>, R} // near
-      cylinder {<-R, R, 0>, <-R, R, Boxz>, R} // left
-      cylinder {<0, R, Boxz+R>, <Boxx, R, Boxz+R>, R} // rear
-      cylinder {<Boxx+R, R, -Boxz>, <Boxx+R, R, Boxz+R>, R} //right
-      object {Segment_of_Torus(R+Rbox, R, 90) rotate 90*y translate <Rbox, R, Rbox> } // near left
-      object {Segment_of_Torus(R+Rbox, R, 90) translate <Boxx-Rbox, R, Rbox> } // near right
-      object {Segment_of_Torus(R+Rbox, R, 90) rotate 180*y translate <Rbox, R, Boxz-Rbox> } // far left
-      object {Segment_of_Torus(R+Rbox, R, -90) translate <Boxx-Rbox, R, Boxz-Rbox> } // far right
+      Xcyl(<0, R, 0>, Box.x, R) // front
+      Zcyl(<0, R, 0>, Box.z, R) // left
+      Xcyl(<0, R, Box.z>, Box.x, R) // rear
+      Zcyl(<Box.x, R, 0>, Box.z, R) // right
+      object {Segment_of_Torus(R+Rbox, R, 90) rotate 90*y translate  <R+Rbox, R, R+Rbox> } // front left
+      object {Segment_of_Torus(R+Rbox, R, 90)             translate  <Box.x-Rbox-R, R, R+Rbox> } // front right
+      object {Segment_of_Torus(R+Rbox, R, 90) rotate 180*y translate <R+Rbox, R, Box.z-R-Rbox> } // rear left
+      object {Segment_of_Torus(R+Rbox, R, -90)             translate <Box.x-Rbox-R, R, Box.z-R-Rbox> } // rear right
     }
   }
 #end
