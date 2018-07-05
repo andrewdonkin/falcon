@@ -8,6 +8,7 @@
 
 #declare RandSeed=seed(1);
 
+// can take a vector argument
 #macro Rand(PlusOrMinus) ((rand(RandSeed) - 0.5) * PlusOrMinus * 2) #end
   
 #macro Ycyl(O, Height, R) cylinder{O, O+y*Height, R} #end
@@ -56,24 +57,62 @@
 #end
 
 // Interpolate author: Margus Ramst
+// X ranges between GS and GE -> result ranges between TS and TE.
 #declare Softly = function(X, GS, GE, TS, TE) {
   (TS+(TE-TS) * ((1 - cos( min((X-GS)/(GE-GS), 1) * pi)) /2 ) )
   //(TS+(TE-TS) * min((X-GS)/(GE-GS), 1)) // linear
 }
+// Same as SoftlyP with more arguments.
 #declare SoftlyBinary = function(X, GS, GE, TS, TE, Power) {
   select(X-GS, TS, TS,
-    select(X-GE,
+    select(GE-X, TE, TE,
       select(X-(GE-GS)/2,
         pow(2*(X-GS)/(GE-GS), Power),           // in < 0.5
         2-pow(2*(1-(X-GS)/(GE-GS)), Power)      // in >= 0.5
       ) / 2 * (TE-TS) + TS
-      , TE
     )
   )
 }
-  
-// Returns 1 when X=0, <1 as abs(X) increases.  Reaches 0 when X=ZeroAtHere.
+// (input,output) always goes through (0,0), (0.5,0.5), and (1,1),
+// but bends either side (unless Power==1 -> linear).
+// Very steep at Power=4.
+// If Power < 1, has the opposite of the desired effect:  starts and
+// ends like a rocket with a long flat bit in the middle.
+// Like a Michael Chrichton book.
+// If Power == 2, practically identical to Interpolate(0) and softly().
+#declare SoftlyP = function(in, Power) {
+  select(in, 0, 0,
+    select(1-in, 1, 1,
+      select(in-0.5,
+        pow(2*in, Power),          // in < 0.5
+        1,
+        2-pow(2*(1-in), Power)     // in > 0.5
+      )/2
+    )
+  )
+}
+
+// (in, out) always goes through (0,0), (Attack,1), (0.5,1) (Decay,1) (1,0)
+// A bell curve with straight sides.  Used as a multiplier on randomness.
+// 
+#declare SharpBell = function(in, Attack, Decay) {
+//  select(in, 0,
+//    select(1-in, 0,  Makes it slow.  Add another 0 parameter, worse.
+      select(in-Attack,
+        SoftlyP(in/Attack, 2),
+        1,
+        select(in-Decay, 1, 1, 1-SoftlyP(in-Decay,2)/(1-Decay))
+      )
+//    )
+//  )
+}
+
+
+
+// Returns 1 when X=0, (1,0] as abs(X) increases.  Reaches 0 when abs(X)=abs(ZeroAtHere).
 //  #declare OneAtZero = function(X, Power) {1 / (Power * (abs(X)+ 1/Power)) }
-#declare OneAtZero = function(X, ZeroAtHere) {Softly(abs(X)/ZeroAtHere, 0, 1, 1, 0)}
+#declare OneAtZero = function(X, ZeroAtHere) {Softly(abs(X)/abs(ZeroAtHere), 0, 1, 1, 0)}
+// Returns 0 when X=0, (0,1] as abs(X) increases.  Reaches 1 when abs(X)=abs(OneAtHere).
+#declare ZeroAtZero = function(X, OneAtHere) {Softly(abs(X)/(OneAtHere), 0, 1, 0, 1)}
 
 #end

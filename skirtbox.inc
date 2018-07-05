@@ -19,7 +19,7 @@
 // ############################################################################
 // One way of merging a block into the plane by swelling it as it nears y=0.
 // It is not perfectly continuous - see skirted_box for that.
-// Centred on the origin, only goes to half of Box.y.
+// Only goes to half of Box.y.
 // Containing box unnecessarily big for Rbox < 1.
 // Really slow.
 // For these reasons, don't use it.
@@ -49,20 +49,24 @@
 // ############################################################################
 // Another way: smooth transient between the plane and the box skirting
 // using a the inside of a torus as a skirting.
-// bounded_by {box {0, Box}}
+// bounded_by {box {<-Box.x/2, 0, -Box.z/2>, <Box.x/2, Box.y, Box.z/2)}}
 #macro Skirted_box(Box             // 3-vector of box dimensions
                    , Rbox          // radius of box's edges
                    , R             // radius of skirting
                    , optional Rot) // rotate around <Box.x/2, 0, Box.z/2>
-  #local Boxx=Box.x - 2 * R; // functions don't like vectors.
+  // Dimensions after we subtract the skirt.
+  #local Boxx=Box.x - 2 * R;
   #local Boxy=Box.y;
   #local Boxz=Box.z - 2 * R;
   union {
     isosurface  {
       function {f_rounded_box(x-Boxx/2, y-Boxy/2, z-Boxz/2, Rbox, Boxx/2, Boxy/2, Boxz/2)
-        // + f_noise3d(x*10, y*20, z*20)/40
+         //+ f_noise3d(x*10, y*10, z*10)/30
+         + f_wrinkles(x*5, y*5, z)/30
+            * (y-R) / (Boxy-R) // smooth transition into skirt
+            * (1 - min(SharpBell((x)/Boxx, 0.1, 0.8), SharpBell((z)/Boxz, 0.1, 0.6)))
         }
-      contained_by {box {<0, 0, 0>,
+      contained_by {box {o,
                          <Boxx, Boxy, Boxz>}}
       evaluate 1*0.6,  sqrt(1/(1*0.6)),  0.7
       accuracy 0.000001
@@ -93,12 +97,9 @@
       object {Segment_of_Torus(R+Rbox, R, 90) rotate 180*y translate <R+Rbox, R, Box.z-R-Rbox> } // rear left
       object {Segment_of_Torus(R+Rbox, R, -90)             translate <Box.x-Rbox-R, R, Box.z-R-Rbox> } // rear right
     }
+    translate <-Box.x/2, 0, -Box.z/2>
     #ifdef(Rot)
-        transform {
-            translate <-Box.x/2, 0, -Box.z/2>
-            rotate Rot
-            translate <Box.x/2, 0, Box.z/2>
-        }
+        rotate Rot
     #end
   }
 #end
